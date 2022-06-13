@@ -17,10 +17,14 @@ Depends:
     R (>= 4.0),
     rmarkdown
 Imports:
+    data.table,
     knitr,
     modelr,
     Require,
-    stringi
+    stringi,
+    utils
+Remotes:
+    PredictiveEcology/Require
 Encoding: UTF-8
 Language: en-CA
 License: GPL (>= 3)

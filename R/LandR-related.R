@@ -13,6 +13,8 @@
 #' @return directories for modified module .Rmd files
 #'
 #' @importFrom Require normPath
+#' @importFrom data.table data.table rbindlist
+#' @importFrom utils capture.output
 #'
 #' @export
 prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
