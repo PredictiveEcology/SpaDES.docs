@@ -14,7 +14,8 @@ Authors@R: c(
            role = "cph")
     )
 Depends:
-    R (>= 4.0)
+    R (>= 4.0),
+    rmarkdown
 Imports:
     knitr,
     modelr,
