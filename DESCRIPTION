@@ -14,8 +14,7 @@ Authors@R: c(
            role = "cph")
     )
 Depends:
-    R (>= 4.0),
-    rmarkdown
+    R (>= 4.0)
 Imports:
     data.table,
     knitr,
@@ -23,14 +22,15 @@ Imports:
     Require,
     stringi,
     utils
+Suggests:
+    rmarkdown,
+    roxygen2
 Remotes:
     PredictiveEcology/Require
 Encoding: UTF-8
 Language: en-CA
 License: GPL (>= 3)
-VignetteBuilder: 
-    knitr, 
-    rmarkdown
+VignetteBuilder: knitr, rmarkdown
 BugReports: https://github.com/PredictiveEcology/SpaDES.docs/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.0
