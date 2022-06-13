@@ -13,7 +13,8 @@
 #' @return directories for modified module .Rmd files
 #'
 #' @importFrom Require normPath
-
+#'
+#' @export
 prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
   ## TODO: this function should be made more generic
   moduleRmds <- list.dirs(modulePath, recursive = FALSE)

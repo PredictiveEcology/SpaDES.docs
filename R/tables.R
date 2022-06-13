@@ -20,6 +20,8 @@
 #'   as \code{x}
 #'
 #' @importFrom stringi stri_sub
+#'
+#' @export
 wrapStrFun <- function(x, size, breakChar = "\n") {
   sapply(x, function(xx) {
     if (is.na(xx) | nchar(xx) <= size) {
@@ -45,6 +47,8 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
 #'   format
 #'
 #' @importFrom knitr opts_current is_latex_output
+#'
+#' @export
 addLabel <- function(caption = "", tag = "tab") {
   chunkLabel <- opts_current$get("label")
   pretag <- if (is_latex_output()) {
