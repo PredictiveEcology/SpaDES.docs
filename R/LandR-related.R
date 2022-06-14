@@ -109,20 +109,23 @@ prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
                              }
 
                              ## if missing add chapter bibliography at the end of each module chapter:
-                             chapterBibLine <- grep("printbibliography|## References|# References", linesModuleRmd)
-                             needChapterBibLine <- TRUE
+                             chapterBibLine <- grep("## References|# References", linesModuleRmd)
 
+                             ## if not in one of the last two lines, "move to the end"
                              if (length(chapterBibLine)) {
-                               ## if not in one of the last two lines, "move to the end"
                                if (!chapterBibLine %in% c(length(linesModuleRmd), length(linesModuleRmd) - 1)) {
-                                 linesModuleRmd[chapterBibLine] <- NULL
-                               } else {
-                                 needChapterBibLine <- FALSE
+                                 chapterBibLineChar <- linesModuleRmd[chapterBibLine]
+                                 linesModuleRmd <- linesModuleRmd[-chapterBibLine]
+                                 linesModuleRmd <- capture.output(cat(linesModuleRmd, chapterBibLineChar, append = TRUE, sep = "\n"))
                                }
+                             } else {
+                               linesModuleRmd <- capture.output(cat(linesModuleRmd, "## References", append = TRUE, sep = "\n"))
                              }
 
-                             if (needChapterBibLine) {
-                               linesModuleRmd <- capture.output(cat(linesModuleRmd, "\\printbibliography[segment=\\therefsegment,heading=subbibliography]", append = TRUE, sep = "\n"))
+                             ## add the LaTex bib command for chapter references
+                             latexChapterBibLine <- any(grepl("printbibliography", linesModuleRmd))
+                             if (isFALSE(latexChapterBibLine)) {
+                               linesModuleRmd <- capture.output(cat(linesModuleRmd, "\\printbibliography[segment=\\therefsegment,heading=none]", append = TRUE, sep = "\n"))
                              }
 
                              writeLines(linesModuleRmd, con = copyModuleRmd)
