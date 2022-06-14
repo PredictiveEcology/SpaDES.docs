@@ -18,7 +18,9 @@ Depends:
 Imports:
     data.table,
     knitr,
+    kableExtra,
     modelr,
+    pander,
     Require,
     stringi,
     utils

@@ -56,3 +56,81 @@ addLabel <- function(caption = "", tag = "tab") {
   }
   paste0(pretag, caption)
 }
+
+
+#' Pander and kable wrapper function
+#'
+#' This function overcomes/works around a recent issue with
+#' \code{kable(..., longtable = TRUE)} and \code{kable_styling(..., full_width = TRUE)}
+#' which fail when knitting to PDF (see https://stackoverflow.com/questions/71651334/longtable-t-messes-up-with-scaled-down-table-in-r-markdown-pdf/72511243#72511243).
+#' It uses \code{pander::pander.table} to automatically deal with long/wide tables when knitting to PDF
+#' and \code{knitr::kable} when knitting to HTML.
+#'
+#' @param tab table object compatible with \code{pander::pander} AND
+#'   \code{knitr::kable}
+#'
+#' @param caption a caption. Make sure special LaTeX characters are escaped.
+#'  \code{bookdown} text references can be useful when formatting text and using
+#'  special characters (https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html#text-references).
+#'
+#' @param landscape if TRUE panderOptions are changed so that the page can be
+#'   put in landscape position. Note that this requires adding \code{\\newpage} and
+#'   \code{\\begin{landscape}} before the chunk and \code{\\end{landscape}} after the chunk,
+#'   and setting chunk option \code{results} to `"asis"`
+#'
+#' @param panderArgs named list of additional arguments passed to \code{pander}.
+#'   Do NOT pass the caption and input table arguments.
+#'
+#' @param kableArgs named list of additional arguments passed to \code{kable}.
+#'   Do NOT pass the caption and input table arguments.
+#'
+#' @param kable_stylingArgs named list of additional arguments passed to
+#'   \code{kable_styling}. Do NOT pass the input table argument.
+#'
+#' @param colum_specArgs named list of additional arguments passed to
+#'   \code{column_spec}. Do NOT pass the input table argument.
+
+#' @return a markdown table.
+#'
+#' @export
+#' @importFrom knitr is_latex_output kable
+#' @importFrom kableExtra kable_styling landscape column_spec
+#' @importFrom pander pander panderOptions
+
+panble <- function(tab, caption = "",
+                   landscape = FALSE,
+                   panderArgs = list(), kableArgs = list(),
+                   kable_stylingArgs = list(), colum_specArgs = list()) {
+
+  if (is_latex_output()) {
+    panderArgs$x <- tab
+    panderArgs$caption <- addLabel(caption)
+    if (landscape) {
+      # opts <- panderOptions("knitr.auto.asis", FALSE)
+      # on.exit(options(opts))
+    }
+    do.call(pander, panderArgs)
+  } else {
+    kableArgs$x <- tab
+    kableArgs$caption <- caption
+    outTable <- do.call(kable, kableArgs)
+
+    ## TODO: there must be a smarter way to do this. The point is that
+    ## returning the table before its finished doesn't seem to work
+    if (length(kable_stylingArgs)) {
+      kable_stylingArgs$kable_input <- outTable
+      outTable <- do.call(kable_styling, kable_stylingArgs)
+    }
+
+    if (length(colum_specArgs)) {
+      colum_specArgs$kable_input <- outTable
+      outTable <- do.call(column_spec, colum_specArgs)
+    }
+    ## this won't do anything in HTML but is left here for future reference
+    # if (landscape) {
+    # outTable <- landscape(outTable)
+    # }
+    cat(outTable, sep = "\n")
+  }
+}
+
