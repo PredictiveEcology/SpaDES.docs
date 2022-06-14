@@ -65,6 +65,7 @@ addLabel <- function(caption = "", tag = "tab") {
 #' which fail when knitting to PDF (see https://stackoverflow.com/questions/71651334/longtable-t-messes-up-with-scaled-down-table-in-r-markdown-pdf/72511243#72511243).
 #' It uses \code{pander::pander.table} to automatically deal with long/wide tables when knitting to PDF
 #' and \code{knitr::kable} when knitting to HTML.
+#' Note that the chunk option \code{results} must be set to `"asis"`.
 #'
 #' @param tab table object compatible with \code{pander::pander} AND
 #'   \code{knitr::kable}
@@ -75,8 +76,7 @@ addLabel <- function(caption = "", tag = "tab") {
 #'
 #' @param landscape if TRUE panderOptions are changed so that the page can be
 #'   put in landscape position. Note that this requires adding \code{\\newpage} and
-#'   \code{\\begin{landscape}} before the chunk and \code{\\end{landscape}} after the chunk,
-#'   and setting chunk option \code{results} to `"asis"`
+#'   \code{\\begin{landscape}} before the chunk and \code{\\end{landscape}} after the chunk.
 #'
 #' @param panderArgs named list of additional arguments passed to \code{pander}.
 #'   Do NOT pass the caption and input table arguments.
@@ -101,6 +101,11 @@ panble <- function(tab, caption = "",
                    landscape = FALSE,
                    panderArgs = list(), kableArgs = list(),
                    kable_stylingArgs = list(), column_specArgs = list()) {
+
+  ## check that chunk results must be 'asis'
+  if (knitr::opts_chunk$get("results") != "asis") {
+    stop("Please use chunk option results = 'asis'")
+  }
 
   if (is_latex_output()) {
     panderArgs$x <- tab
@@ -130,7 +135,7 @@ panble <- function(tab, caption = "",
     # if (landscape) {
     # outTable <- landscape(outTable)
     # }
-    cat(outTable, sep = "\n")
+    print(outTable)
   }
 }
 
