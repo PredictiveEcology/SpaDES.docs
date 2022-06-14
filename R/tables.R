@@ -89,7 +89,7 @@ addLabel <- function(caption = "", tag = "tab") {
 #'
 #' @param column_specArgs named list of additional arguments passed to
 #'   \code{column_spec}. Do NOT pass the input table argument.
-
+#'
 #' @return a markdown table.
 #'
 #' @export
