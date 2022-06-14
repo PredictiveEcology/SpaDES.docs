@@ -106,8 +106,8 @@ panble <- function(tab, caption = "",
     panderArgs$x <- tab
     panderArgs$caption <- addLabel(caption)
     if (landscape) {
-      # opts <- panderOptions("knitr.auto.asis", FALSE)
-      # on.exit(options(opts))
+      opts <- panderOptions("knitr.auto.asis", FALSE)
+      on.exit(options(opts))
     }
     do.call(pander, panderArgs)
   } else {
