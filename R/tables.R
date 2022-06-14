@@ -19,9 +19,8 @@
 #' @return the "broken" and collapsed strings, in the same class
 #'   as \code{x}
 #'
-#' @importFrom stringi stri_sub
-#'
 #' @export
+#' @importFrom stringi stri_sub
 wrapStrFun <- function(x, size, breakChar = "\n") {
   sapply(x, function(xx) {
     if (is.na(xx) | nchar(xx) <= size) {
@@ -46,9 +45,8 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
 #' @return the full caption with its label in a HTML or LaTeX compatible
 #'   format
 #'
-#' @importFrom knitr opts_current is_latex_output
-#'
 #' @export
+#' @importFrom knitr opts_current is_latex_output
 addLabel <- function(caption = "", tag = "tab") {
   chunkLabel <- opts_current$get("label")
   pretag <- if (is_latex_output()) {
