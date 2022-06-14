@@ -103,7 +103,7 @@ panble <- function(tab, caption = "",
                    kable_stylingArgs = list(), column_specArgs = list()) {
 
   ## check that chunk results must be 'asis'
-  if (knitr::opts_chunk$get("results") != "asis") {
+  if (isFALSE(knitr::opts_current$get("results") == "asis")) {
     stop("Please use chunk option results = 'asis'")
   }
 
