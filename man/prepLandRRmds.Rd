@@ -8,6 +8,8 @@ prepLandRRmds(modulePath, rebuildCache = FALSE)
 }
 \arguments{
 \item{modulePath}{modules' folder directory}
+
+\item{rebuildCache}{should cached chunks be re-executed?}
 }
 \value{
 directories for modified module .Rmd files
