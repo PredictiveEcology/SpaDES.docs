@@ -1,3 +1,7 @@
+utils::globalVariables(c(
+  ":=", "dups", "lineText", "lineID"
+))
+
 ## --------------------------------------------------
 ## LandR-Manual miscellaneous functions
 ## --------------------------------------------------
