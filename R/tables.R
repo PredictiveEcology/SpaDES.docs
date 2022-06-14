@@ -118,6 +118,7 @@ panble <- function(tab, caption = "",
   } else {
     kableArgs$x <- tab
     kableArgs$caption <- caption
+    kableArgs$format <- "html"
     outTable <- do.call(kable, kableArgs)
 
     ## TODO: there must be a smarter way to do this. The point is that
