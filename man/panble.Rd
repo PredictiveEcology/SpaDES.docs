@@ -11,7 +11,7 @@ panble(
   panderArgs = list(),
   kableArgs = list(),
   kable_stylingArgs = list(),
-  colum_specArgs = list()
+  column_specArgs = list()
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ Do NOT pass the caption and input table arguments.}
 \item{kable_stylingArgs}{named list of additional arguments passed to
 \code{kable_styling}. Do NOT pass the input table argument.}
 
-\item{colum_specArgs}{named list of additional arguments passed to
+\item{column_specArgs}{named list of additional arguments passed to
 \code{column_spec}. Do NOT pass the input table argument.}
 }
 \value{

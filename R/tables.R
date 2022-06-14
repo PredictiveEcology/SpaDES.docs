@@ -87,7 +87,7 @@ addLabel <- function(caption = "", tag = "tab") {
 #' @param kable_stylingArgs named list of additional arguments passed to
 #'   \code{kable_styling}. Do NOT pass the input table argument.
 #'
-#' @param colum_specArgs named list of additional arguments passed to
+#' @param column_specArgs named list of additional arguments passed to
 #'   \code{column_spec}. Do NOT pass the input table argument.
 
 #' @return a markdown table.
@@ -100,7 +100,7 @@ addLabel <- function(caption = "", tag = "tab") {
 panble <- function(tab, caption = "",
                    landscape = FALSE,
                    panderArgs = list(), kableArgs = list(),
-                   kable_stylingArgs = list(), colum_specArgs = list()) {
+                   kable_stylingArgs = list(), column_specArgs = list()) {
 
   if (is_latex_output()) {
     panderArgs$x <- tab
@@ -122,9 +122,9 @@ panble <- function(tab, caption = "",
       outTable <- do.call(kable_styling, kable_stylingArgs)
     }
 
-    if (length(colum_specArgs)) {
-      colum_specArgs$kable_input <- outTable
-      outTable <- do.call(column_spec, colum_specArgs)
+    if (length(column_specArgs)) {
+      column_specArgs$kable_input <- outTable
+      outTable <- do.call(column_spec, column_specArgs)
     }
     ## this won't do anything in HTML but is left here for future reference
     # if (landscape) {
