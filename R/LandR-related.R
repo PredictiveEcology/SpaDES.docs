@@ -14,6 +14,8 @@ utils::globalVariables(c(
 #'
 #' @param modulePath modules' folder directory
 #'
+#' @param rebuildCache should cached chunks be re-executed?
+#'
 #' @return directories for modified module .Rmd files
 #'
 #' @importFrom Require normPath
