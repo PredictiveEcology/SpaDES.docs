@@ -2,7 +2,7 @@
 
 export(addLabel)
 export(panble)
-export(prepLandRRmds)
+export(prepManualRmds)
 export(wrapStrFun)
 importFrom(Require,normPath)
 importFrom(data.table,data.table)
