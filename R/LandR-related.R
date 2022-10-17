@@ -2,10 +2,6 @@ utils::globalVariables(c(
   ":=", "dups", "lineText", "lineID"
 ))
 
-## --------------------------------------------------
-## LandR-Manual miscellaneous functions
-## --------------------------------------------------
-
 #' Prepare module .Rmd to render book
 #'
 #' Creates modified versions of the modules' .Rmd files,
@@ -22,8 +18,7 @@ utils::globalVariables(c(
 #' @importFrom Require normPath
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
-prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
-  ## TODO: this function should be made more generic
+prepManualRmds <- function(modulePath, rebuildCache = FALSE) {
   moduleRmds <- list.dirs(modulePath, recursive = FALSE)
   moduleRmds <- paste0(file.path(moduleRmds, basename(moduleRmds)), ".Rmd")
 
@@ -41,7 +36,7 @@ prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
                              nonEmptyLines <- linesModuleRmd[linesModuleRmd != ""]
                              if (!grepl("^# ", nonEmptyLines[1])) {
                                modName <- sub(".Rmd", "" ,basename(x))
-                               chapterTitle <- paste0("# LandR *", modName, "* Module")
+                               chapterTitle <- paste0("# LandR *", modName, "* Module") ## TODO: remove 'LandR' to keep it general
 
                                linesModuleRmd <- c("", chapterTitle, linesModuleRmd)
                              }
@@ -136,12 +131,14 @@ prepLandRRmds <- function(modulePath, rebuildCache = FALSE) {
   ## make sure there aren't repeated text references across modules
   ## first get module order
   bkdwnYML <- readLines("_bookdown.yml")
-  bkdwnYMLsub <- bkdwnYML[grepl("modules\\/", bkdwnYML)]
-  bkdwnYMLsub <- sub(".*(modules)", "\\1", bkdwnYMLsub)
+  bkdwnYMLsub <- bkdwnYML[grepl(paste0(basename(modulePath), "\\/"), bkdwnYML)]
+  #bkdwnYMLsub <- sub(paste0(".*(", basename(modulePath), ")"), "\\1", bkdwnYMLsub) ## TODO: what is this trying to do? remove the "  - "?
+  bkdwnYMLsub <- sub("  - ", "", bkdwnYMLsub)
+  bkdwnYMLsub <- normPath(bkdwnYMLsub[-1])
 
   ## now read all module lines and put the list in the right order
   allModules <- lapply(copyModuleRmds, readLines)
-  names(allModules) <- copyModuleRmds
+  names(allModules) <- normPath(copyModuleRmds)
   allModules <- allModules[bkdwnYMLsub]
 
   ## get the text ref lines and their line IDs
