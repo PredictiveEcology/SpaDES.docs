@@ -11,7 +11,7 @@ Authors@R: c(
            role = c("aut"), comment = c(ORCID = "0000-0003-4036-977X")),
     person("Eliot J B", "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca",
            role = c("aut"), comment = c(ORCID = "0000-0002-6914-8316")),
-    person("Her Majesty the Queen in Right of Canada, as represented by the Minister of Natural Resources Canada",
+    person("His Majesty the King in Right of Canada, as represented by the Minister of Natural Resources Canada",
            role = "cph")
     )
 Depends:
