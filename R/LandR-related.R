@@ -8,11 +8,19 @@ utils::globalVariables(c(
 #'   with YAML headers removed and adapted knitr setup
 #'   chunks
 #'
-#' @param modulePath modules' folder directory
+#' @param modulePath modules' folder directory. It must be
+#'  exactly as in the `_bookdown.yml` lines specifying where
+#'  the module .Rmds live. For instance, if in `_bookdown.yml`
+#'  the list of module .Rmds is provided as `-  modules/XXX.Rmd`,
+#'  `-  ~/modules/XXX.Rmd`, or `-  ../X/modules/XXX.Rmd`
+#'  `modulePath` must be either `modules`, `~/modules` and
+#'  `../X/modules` respectively. A `/` may be appended at the
+#'  of `modulePath` (e.g. `~/modules/`).
+#'  Note that all modules must be in the same directory.
 #'
 #' @param rebuildCache should cached chunks be re-executed?
 #'
-#' @return directories for modified module .Rmd files
+#' @return file paths of the modified module .Rmd files
 #'
 #' @export
 #' @importFrom Require normPath
@@ -131,10 +139,18 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE) {
   ## make sure there aren't repeated text references across modules
   ## first get module order
   bkdwnYML <- readLines("_bookdown.yml")
-  bkdwnYMLsub <- bkdwnYML[grepl(paste0(basename(modulePath), "\\/"), bkdwnYML)]
-  #bkdwnYMLsub <- sub(paste0(".*(", basename(modulePath), ")"), "\\1", bkdwnYMLsub) ## TODO: what is this trying to do? remove the "  - "?
-  bkdwnYMLsub <- sub("  - ", "", bkdwnYMLsub)
-  bkdwnYMLsub <- normPath(bkdwnYMLsub[-1])
+
+  ## grep module folder name at the start of the string and escape "." and "/"
+  grepStr <- paste0("^", modulePath)
+  grepStr <- gsub("/", "\\/", grepStr, fixed = TRUE)
+  grepStr <- gsub(".", "\\.", grepStr, fixed = TRUE)
+  ## make sure there's a / at the end to grep only a folder at the start of a .Rmd path
+  if (!grepl("\\/$", grepStr)) {
+    grepStr <- paste0(grepStr, "\\/")
+  }
+  bkdwnYMLsub <- sub("  - ", "", bkdwnYML, fixed = TRUE)
+  bkdwnYMLsub <- bkdwnYMLsub[grepl(grepStr, bkdwnYMLsub)]
+  bkdwnYMLsub <- normPath(bkdwnYMLsub)
 
   ## now read all module lines and put the list in the right order
   allModules <- lapply(copyModuleRmds, readLines)
