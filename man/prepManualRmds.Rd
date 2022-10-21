@@ -7,12 +7,20 @@
 prepManualRmds(modulePath, rebuildCache = FALSE)
 }
 \arguments{
-\item{modulePath}{modules' folder directory}
+\item{modulePath}{modules' folder directory. It must be
+exactly as in the \verb{_bookdown.yml} lines specifying where
+the module .Rmds live. For instance, if in \verb{_bookdown.yml}
+the list of module .Rmds is provided as \code{-  modules/XXX.Rmd},
+\verb{-  ~/modules/XXX.Rmd}, or \code{-  ../X/modules/XXX.Rmd}
+\code{modulePath} must be either \code{modules}, \verb{~/modules} and
+\code{../X/modules} respectively. A \code{/} may be appended at the
+of \code{modulePath} (e.g. \verb{~/modules/}).
+Note that all modules must be in the same directory.}
 
 \item{rebuildCache}{should cached chunks be re-executed?}
 }
 \value{
-directories for modified module .Rmd files
+file paths of the modified module .Rmd files
 }
 \description{
 Creates modified versions of the modules' .Rmd files,
