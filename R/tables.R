@@ -136,7 +136,8 @@ panble <- function(tab, caption = "",
     # if (landscape) {
     # outTable <- landscape(outTable)
     # }
-    print(outTable)
+    # print(outTable)  ## this was working before?
+    return(outTable)
   }
 }
 
