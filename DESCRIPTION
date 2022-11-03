@@ -2,8 +2,8 @@ Package: SpaDES.docs
 Title: Helper Utilities for Creating SpaDES Module Documentation and Manuals
 Description: Groups several functions used to create SpaDES module manuals in Rmarkdown format output to HTML and LaTeX.
 URL: https://github.com/PredictiveEcology/SpaDES.docs
-Date: 2022-10-21
-Version: 0.0.0.9003
+Date: 2022-11-03
+Version: 0.0.1
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
