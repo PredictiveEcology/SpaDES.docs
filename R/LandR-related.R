@@ -32,13 +32,17 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE) {
 
   copyModuleRmds <- sapply(moduleRmds, rebuildCache = rebuildCache,
                            FUN = function(x, rebuildCache) {
+                             message(paste("Copying module", basename(dirname(x)), "..."))
                              copyModuleRmd <- sub("(.*)(\\.Rmd)", "\\12\\2", x)
                              file.copy(x, copyModuleRmd, overwrite = TRUE)
 
                              ## strip module.Rmd YAML headers -----
                              linesModuleRmd <- readLines(copyModuleRmd)
-                             lines2Rm <- modelr::seq_range(which(linesModuleRmd == "---"), by = 1)
-                             linesModuleRmd <- linesModuleRmd[-lines2Rm]
+                             ids <- which(linesModuleRmd == "---")
+                             if (length(ids) > 0) {
+                               lines2Rm <- modelr::seq_range(ids, by = 1)
+                               linesModuleRmd <- linesModuleRmd[-lines2Rm]
+                             }
 
                              ## add chapter title if not present
                              nonEmptyLines <- linesModuleRmd[linesModuleRmd != ""]
