@@ -23,7 +23,7 @@ panble(
 special characters (https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html#text-references).}
 
 \item{landscape}{if TRUE panderOptions are changed so that the page can be
-put in landscape position. Note that this requires adding \code{\\newpage} and
+put in landscape position. Note that this requires adding \verb{\\\\newpage} and
 \code{\\begin{landscape}} before the chunk and \code{\\end{landscape}} after the chunk.}
 
 \item{panderArgs}{named list of additional arguments passed to \code{pander}.
