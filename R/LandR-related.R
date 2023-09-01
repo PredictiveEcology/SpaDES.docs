@@ -8,19 +8,16 @@ utils::globalVariables(c(
 #'   with YAML headers removed and adapted knitr setup
 #'   chunks
 #'
-#' @param modulePath modules' folder directory. It must be
-#'  exactly as in the `_bookdown.yml` lines specifying where
-#'  the module .Rmds live. For instance, if in `_bookdown.yml`
-#'  the list of module .Rmds is provided as `-  modules/XXX.Rmd`,
-#'  `-  ~/modules/XXX.Rmd`, or `-  ../X/modules/XXX.Rmd`
-#'  `modulePath` must be either `modules`, `~/modules` and
-#'  `../X/modules` respectively. A `/` may be appended at the
-#'  of `modulePath` (e.g. `~/modules/`).
+#' @param modulePath modules' folder directory, specified exactly as in `_bookdown.yml`.
+#'  For instance, if in `_bookdown.yml` the list of module `.Rmd` filess is provided as
+#'  `-  modules/XXX.Rmd`, `-  ~/modules/XXX.Rmd`, or `-  ../X/modules/XXX.Rmd`, then
+#'  `modulePath` must be either `modules`, `~/modules` or `../X/modules` respectively.
+#'  A `/` may be appended at the of `modulePath` (e.g. `~/modules/`).
 #'  Note that all modules must be in the same directory.
 #'
 #' @param rebuildCache should cached chunks be re-executed?
 #'
-#' @return file paths of the modified module .Rmd files
+#' @return file paths of the modified module `.Rmd` files
 #'
 #' @export
 #' @importFrom Require normPath
