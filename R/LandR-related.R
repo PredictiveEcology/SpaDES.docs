@@ -9,7 +9,7 @@ utils::globalVariables(c(
 #'   chunks
 #'
 #' @param modulePath modules' folder directory, specified exactly as in `_bookdown.yml`.
-#'  For instance, if in `_bookdown.yml` the list of module `.Rmd` filess is provided as
+#'  For instance, if in `_bookdown.yml` the list of module `.Rmd` files is provided as
 #'  `-  modules/XXX.Rmd`, `-  ~/modules/XXX.Rmd`, or `-  ../X/modules/XXX.Rmd`, then
 #'  `modulePath` must be either `modules`, `~/modules` or `../X/modules` respectively.
 #'  A `/` may be appended at the of `modulePath` (e.g. `~/modules/`).
@@ -17,14 +17,20 @@ utils::globalVariables(c(
 #'
 #' @param rebuildCache should cached chunks be re-executed?
 #'
+#' @param ignoreModules character vector of modules to ignore.
+#'
 #' @return file paths of the modified module `.Rmd` files
 #'
 #' @export
 #' @importFrom Require normPath
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
-prepManualRmds <- function(modulePath, rebuildCache = FALSE) {
+prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL) {
   moduleRmds <- list.dirs(modulePath, recursive = FALSE)
+  if (!is.null(ignoreModules)) {
+    moduleRmds <- grep(x = moduleRmds, pattern = paste0(ignoreModules, collapse = "|"),
+                       invert = TRUE, value = TRUE)
+  }
   moduleRmds <- paste0(file.path(moduleRmds, basename(moduleRmds)), ".Rmd")
 
   copyModuleRmds <- sapply(moduleRmds, rebuildCache = rebuildCache,

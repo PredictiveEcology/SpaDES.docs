@@ -4,17 +4,19 @@
 \alias{prepManualRmds}
 \title{Prepare module .Rmd to render book}
 \usage{
-prepManualRmds(modulePath, rebuildCache = FALSE)
+prepManualRmds(modulePath, rebuildCache = FALSE, ignoreModules = NULL)
 }
 \arguments{
 \item{modulePath}{modules' folder directory, specified exactly as in \verb{_bookdown.yml}.
-For instance, if in \verb{_bookdown.yml} the list of module \code{.Rmd} filess is provided as
+For instance, if in \verb{_bookdown.yml} the list of module \code{.Rmd} files is provided as
 \code{-  modules/XXX.Rmd}, \verb{-  ~/modules/XXX.Rmd}, or \code{-  ../X/modules/XXX.Rmd}, then
 \code{modulePath} must be either \code{modules}, \verb{~/modules} or \code{../X/modules} respectively.
 A \code{/} may be appended at the of \code{modulePath} (e.g. \verb{~/modules/}).
 Note that all modules must be in the same directory.}
 
 \item{rebuildCache}{should cached chunks be re-executed?}
+
+\item{ignoreModules}{character vector of modules to ignore.}
 }
 \value{
 file paths of the modified module \code{.Rmd} files

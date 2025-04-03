@@ -1,6 +1,7 @@
-bug reports <https://github.com/PredictiveEcology/SpaDES.docs/issues>
+# SpaDES.docs (development version)
 
+* `prepManualRmds()` gains argument `ignoreModules`;
 
-version 0.0.1
-=============
-* Initial version
+# SpaDES.docs 0.0.1
+
+* Initial version;
