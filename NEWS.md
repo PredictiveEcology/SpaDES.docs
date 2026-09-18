@@ -1,5 +1,16 @@
 # SpaDES.docs (development version)
 
+* **Breaking:** `prepManualRmds()` writes the generated chapters to a staging
+  directory under the book root (`stagingPath`, default `_manual_rmds`) instead
+  of into each module's own directory. Books must list the chapters from there
+  in `_bookdown.yml`, and should add the directory to `.gitignore`. The module
+  directories are git submodules in every project that uses this package: a
+  failed build used to leave a `<module>2.Rmd` in each one, and each module
+  repository carried a `.gitignore` line to hide it. Verified equivalent by
+  rendering the same chapters from both locations -- the output is byte-identical,
+  including relative images, cross-references and citations;
+* chapters left by a previous run are cleared, so a module removed from a project
+  no longer lingers as an orphan chapter;
 * `prepManualRmds()` no longer fails when `_bookdown.yml` lists none of the
   modules under `modulePath` -- the case reported in #1, where the modules exist
   but every module line is commented out. It warns, writes the chapters, and

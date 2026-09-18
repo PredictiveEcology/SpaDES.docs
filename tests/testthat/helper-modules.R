@@ -30,7 +30,7 @@ localBook <- function(modules, modulePath = "modules", envir = parent.frame()) {
   dir.create(modulePath, showWarnings = FALSE)
   writeLines(
     c("book_filename: test", "rmd_files:", "  - index.Rmd",
-      paste0("  - ", file.path(modulePath, modules, paste0(modules, "2.Rmd")))),
+      paste0("  - ", file.path("_manual_rmds", paste0(modules, "2.Rmd")))),
     "_bookdown.yml"
   )
   invisible(d)
