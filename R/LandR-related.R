@@ -289,14 +289,16 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
 #'
 #' @param bookdownYML path to the book's `_bookdown.yml`, which supplies the
 #'  chapter order used when de-duplicating text references across chapters.
-#'  Read from the working directory by default.
+#'  Read from the working directory by default. A chapter that is prepared but
+#'  not listed here is reported: it would otherwise be absent from the book
+#'  without the build failing.
 #'
 #' @param stagingPath directory the generated chapters are written to, relative
-#'  to the book root. Nothing is written into the module directories, which are
-#'  git submodules in every project that uses this package -- a failed build
-#'  used to leave a `<module>2.Rmd` in each one, and each module repository
-#'  carried a `.gitignore` line to hide it. List the chapters from here in
-#'  `_bookdown.yml`, and add this directory to the book's `.gitignore`.
+#'  to the book root. Nothing is written into the module directories: a failed
+#'  build used to leave a `<module>2.Rmd` in each one, dirtying every module
+#'  checkout, and each module repository carried a `.gitignore` line to hide it.
+#'  List the chapters from here in `_bookdown.yml`, and add this directory to
+#'  the book's `.gitignore`.
 #'
 #' @return file paths of the modified module `.Rmd` files
 #'
@@ -382,6 +384,20 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
             "de-duplicated against them: ",
             paste(basename(listedNotPrepped), collapse = ", "), call. = FALSE)
   }
+  ## and the other direction. This one is quiet: the chapter is written, the
+  ## build goes green, and the module is simply absent from the book. Cheap to
+  ## do while both lists are in hand, and the likely mistake once a manual
+  ## fetches its modules from a list rather than from git submodules.
+  ## When the book lists nothing from the staging directory at all, the warning
+  ## below says so more usefully than naming every module, so leave it to that.
+  preppedNotListed <- setdiff(names(allModules), bkdwnYMLsub)
+  if (length(bkdwnYMLsub) && length(preppedNotListed)) {
+    warning("prepManualRmds(): prepared ", length(preppedNotListed),
+            " chapter(s) that ", bookdownYML, " does not list, so they will not ",
+            "appear in the book: ",
+            paste(basename(preppedNotListed), collapse = ", "), call. = FALSE)
+  }
+
   allModules <- allModules[intersect(bkdwnYMLsub, names(allModules))]
 
   ## nothing to de-duplicate against. The chapters are written and usable, so
