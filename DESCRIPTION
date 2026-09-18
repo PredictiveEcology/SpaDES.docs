@@ -5,7 +5,7 @@ URL:
     https://predictiveecology.github.io/SpaDES.docs/,
     https://github.com/PredictiveEcology/SpaDES.docs
 Date: 2026-09-17
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
@@ -25,7 +25,8 @@ Imports:
     pander,
     Require,
     stringi,
-    utils
+    utils,
+    yaml
 Suggests:
     rmarkdown,
     roxygen2,

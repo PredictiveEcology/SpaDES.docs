@@ -1,3 +1,17 @@
+# SpaDES.docs (development version)
+
+* `prepManualRmds()` no longer fails when `_bookdown.yml` lists none of the
+  modules under `modulePath` -- the case reported in #1, where the modules exist
+  but every module line is commented out. It warns, writes the chapters, and
+  skips the cross-chapter de-duplication it cannot do (#1);
+* `prepManualRmds()` parses `_bookdown.yml` as YAML rather than by indentation.
+  The old `sub("  - ", ...)` assumed exactly two spaces, could not read the
+  flow-style `rmd_files: [a, b]` form, and counted a commented-out line as a
+  listed chapter;
+* `prepManualRmds()` gains argument `bookdownYML`, and checks the file exists
+  before writing anything. A missing book file used to surface only after every
+  `<module>2.Rmd` had been created, leaving them behind;
+
 # SpaDES.docs 0.1.0
 
 * drop support for R 4.1 and 4.2;
