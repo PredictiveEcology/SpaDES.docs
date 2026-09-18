@@ -4,6 +4,9 @@
   minimal example, what `prepManualRmds()` does to each module `.Rmd` and why,
   the build-script pattern, and the things that bite. Resolves the
   `VignetteBuilder` field that had been declared against no vignette (#2);
+* the README says what the package is for, points at the vignette, and lists the
+  manuals built with it. pkgdown builds the site home page from it, so it is also
+  the front page of <https://predictiveecology.github.io/SpaDES.docs/> (#3);
 * **Breaking:** `prepManualRmds()` writes the generated chapters to a staging
   directory under the book root (`stagingPath`, default `_manual_rmds`) instead
   of into each module's own directory. Books must list the chapters from there
