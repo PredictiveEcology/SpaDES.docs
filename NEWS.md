@@ -24,6 +24,11 @@
   rendered book directory. A deploy publishes the contents of that directory, so
   these files never reach the site if written to the repository root (#15).
 * `writePkgBib()` writes a bibliography for the R packages in use (#15).
+* new vignette, *Building a continuously updated manual*, for a manual that
+  tracks its modules' branches and rebuilds itself -- the CI arrangement
+  fireSenseManual and LandR-Manual use, as distinct from a project manual that
+  pins its modules. *Building a project manual* now says which of the two it
+  covers, and both worked examples use the functions above (#15).
 
 # SpaDES.docs 0.2.0
 
