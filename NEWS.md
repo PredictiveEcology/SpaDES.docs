@@ -1,3 +1,12 @@
+# SpaDES.docs 0.2.0.9000
+
+* `prepManualRmds()` warns when it prepares a chapter that `_bookdown.yml` does
+  not list. The opposite case already warned; this direction is the quiet one,
+  because the chapter is written, the build succeeds, and the module is simply
+  absent from the book. It matters most for a manual that takes its module list
+  from somewhere other than git submodules, where adding a module and forgetting
+  the chapter entry is easy to do (#14).
+
 # SpaDES.docs 0.2.0
 
 * new vignette, *Building a project manual*: the layout a manual uses, a runnable

@@ -330,6 +330,28 @@ test_that("prepManualRmds() warns when _bookdown.yml lists no chapters for this 
   expect_true(file.exists(out))
 })
 
+test_that("prepManualRmds() warns when a prepared chapter is not listed in _bookdown.yml", {
+  localBook("modAG")  ## lists modAG2.Rmd only
+  writeModule("modAG", "modules", body = "Body.")
+  writeModule("modAH", "modules", body = "Body.")
+
+  ## the quiet direction: modAH is written, the build goes green, and the module
+  ## is simply absent from the book
+  expect_warning(out <- prepManualRmds("modules"), "does not list")
+  expect_setequal(basename(out), c("modAG2.Rmd", "modAH2.Rmd"))
+})
+
+test_that("the unlisted-chapter warning defers to the no-chapters warning", {
+  localBook("modAI")
+  writeModule("modAI", "modules", body = "Body.")
+  ## nothing from the staging directory is listed at all
+  writeLines(c("book_filename: t", "rmd_files:", "  - index.Rmd"), "_bookdown.yml")
+
+  w <- capture_warnings(prepManualRmds("modules"))
+  expect_length(w, 1L)
+  expect_match(w, "lists no chapters")
+})
+
 test_that("prepManualRmds() reads _bookdown.yml as YAML, not by indentation", {
   localBook("modAD")
   writeModule("modAD", "modules", body = c("(ref:k) shared", "", "Body."))
