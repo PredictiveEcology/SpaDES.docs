@@ -1,0 +1,9 @@
+## Published at the GitHub Pages default. A custom subdomain
+## (spades-docs.predictiveecology.org, as SpaDES.core and reproducible use) needs a
+## DNS CNAME record pointing at predictiveecology.github.io first; set `url` to it
+## afterwards and build_site_github_pages() writes the CNAME file from this field.
+url: https://predictiveecology.github.io/SpaDES.docs/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
