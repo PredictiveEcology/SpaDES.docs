@@ -10,13 +10,12 @@ wrapStrFun(x, size, breakChar = "\\n")
 \item{x}{the string, or a vector or list of strings to break}
 
 \item{size}{desired size of string chunks. Strings whose
-original size is <= than \code{size} will not be cut.}
+original size is less than or equal to \code{size} will not be cut.}
 
 \item{breakChar}{break symbol/character used to separate chunks}
 }
 \value{
-the "broken" and collapsed strings, in the same class
-as \code{x}
+the "broken" and collapsed strings, in the same class as \code{x}
 }
 \description{
 Unlike \code{strwrap} and \code{strsplit}, \code{wrapStrFun}

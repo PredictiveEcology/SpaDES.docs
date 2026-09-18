@@ -4,7 +4,7 @@
 
 #' Wrap/break strings by size
 #'
-#' Unlike \code{strwrap} and \code{strsplit}, \code{wrapStrFun}
+#' Unlike `strwrap` and `strsplit`, `wrapStrFun`
 #'   "breaks" a string based on length creating chunks of a
 #'   specified size that are collapsed into a single string but
 #'   separated using a special character
@@ -12,12 +12,11 @@
 #' @param x the string, or a vector or list of strings to break
 #'
 #' @param size desired size of string chunks. Strings whose
-#'   original size is <= than \code{size} will not be cut.
+#'   original size is less than or equal to `size` will not be cut.
 #'
 #' @param breakChar break symbol/character used to separate chunks
 #'
-#' @return the "broken" and collapsed strings, in the same class
-#'   as \code{x}
+#' @return the "broken" and collapsed strings, in the same class as `x`
 #'
 #' @export
 #' @importFrom stringi stri_sub
@@ -31,15 +30,15 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
   })
 }
 
-#' Labels and captions using \code{bookdown} cross-referencing format
+#' Labels and captions using `bookdown` cross-referencing format
 #'
-#' Makes captions for tables and figures using the \code{bookdown}
+#' Makes captions for tables and figures using the `bookdown`
 #'   cross-referencing format. Meant to be used inside an Rmarkdown chunk.
 #'
 #' @param caption a string with the desired caption.
 #'
-#' @param tag the cross-reference tag used by \code{bookdown}. Recognised
-#'   tagas are \code{"tab"}, \code{"fig"} and \code{"eq"}. See
+#' @param tag the cross-reference tag used by `bookdown`. Recognised
+#'   tagas are `"tab"`, `"fig"` and `"eq"`. See
 #'   https://bookdown.org/yihui/bookdown
 #'
 #' @return the full caption with its label in a HTML or LaTeX compatible
@@ -61,34 +60,34 @@ addLabel <- function(caption = "", tag = "tab") {
 #' Pander and kable wrapper function
 #'
 #' This function overcomes/works around a recent issue with
-#' \code{kable(..., longtable = TRUE)} and \code{kable_styling(..., full_width = TRUE)}
+#' `kable(..., longtable = TRUE)` and `kable_styling(..., full_width = TRUE)`
 #' which fail when knitting to PDF (see https://stackoverflow.com/questions/71651334/longtable-t-messes-up-with-scaled-down-table-in-r-markdown-pdf/72511243#72511243).
-#' It uses \code{pander::pander.table} to automatically deal with long/wide tables when knitting to PDF
-#' and \code{knitr::kable} when knitting to HTML.
-#' Note that the chunk option \code{results} must be set to `"asis"`.
+#' It uses `pander::pander.table` to automatically deal with long/wide tables when knitting to PDF
+#' and `knitr::kable` when knitting to HTML.
+#' Note that the chunk option `results` must be set to `"asis"`.
 #'
-#' @param tab table object compatible with \code{pander::pander} AND
-#'   \code{knitr::kable}
+#' @param tab table object compatible with `pander::pander` AND
+#'   `knitr::kable`
 #'
 #' @param caption a caption. Make sure special LaTeX characters are escaped.
-#'  \code{bookdown} text references can be useful when formatting text and using
+#'  `bookdown` text references can be useful when formatting text and using
 #'  special characters (https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html#text-references).
 #'
 #' @param landscape if TRUE panderOptions are changed so that the page can be
-#'   put in landscape position. Note that this requires adding \code{\\newpage} and
+#'   put in landscape position. Note that this requires adding `\\newpage` and
 #'   \code{\\begin{landscape}} before the chunk and \code{\\end{landscape}} after the chunk.
 #'
-#' @param panderArgs named list of additional arguments passed to \code{pander}.
+#' @param panderArgs named list of additional arguments passed to `pander`.
 #'   Do NOT pass the caption and input table arguments.
 #'
-#' @param kableArgs named list of additional arguments passed to \code{kable}.
+#' @param kableArgs named list of additional arguments passed to `kable`.
 #'   Do NOT pass the caption and input table arguments.
 #'
 #' @param kable_stylingArgs named list of additional arguments passed to
-#'   \code{kable_styling}. Do NOT pass the input table argument.
+#'   `kable_styling`. Do NOT pass the input table argument.
 #'
 #' @param column_specArgs named list of additional arguments passed to
-#'   \code{column_spec}. Do NOT pass the input table argument.
+#'   `column_spec`. Do NOT pass the input table argument.
 #'
 #' @return a markdown table.
 #'

@@ -4,23 +4,22 @@
 \alias{prepManualRmds}
 \title{Prepare module .Rmd to render book}
 \usage{
-prepManualRmds(modulePath, rebuildCache = FALSE)
+prepManualRmds(modulePath, rebuildCache = FALSE, ignoreModules = NULL)
 }
 \arguments{
-\item{modulePath}{modules' folder directory. It must be
-exactly as in the \verb{_bookdown.yml} lines specifying where
-the module .Rmds live. For instance, if in \verb{_bookdown.yml}
-the list of module .Rmds is provided as \code{-  modules/XXX.Rmd},
-\verb{-  ~/modules/XXX.Rmd}, or \code{-  ../X/modules/XXX.Rmd}
-\code{modulePath} must be either \code{modules}, \verb{~/modules} and
-\code{../X/modules} respectively. A \code{/} may be appended at the
-of \code{modulePath} (e.g. \verb{~/modules/}).
+\item{modulePath}{modules' folder directory, specified exactly as in \verb{_bookdown.yml}.
+For instance, if in \verb{_bookdown.yml} the list of module \code{.Rmd} files is provided as
+\code{-  modules/XXX.Rmd}, \verb{-  ~/modules/XXX.Rmd}, or \code{-  ../X/modules/XXX.Rmd}, then
+\code{modulePath} must be either \code{modules}, \verb{~/modules} or \code{../X/modules} respectively.
+A \code{/} may be appended at the of \code{modulePath} (e.g. \verb{~/modules/}).
 Note that all modules must be in the same directory.}
 
 \item{rebuildCache}{should cached chunks be re-executed?}
+
+\item{ignoreModules}{character vector of modules to ignore.}
 }
 \value{
-file paths of the modified module .Rmd files
+file paths of the modified module \code{.Rmd} files
 }
 \description{
 Creates modified versions of the modules' .Rmd files,

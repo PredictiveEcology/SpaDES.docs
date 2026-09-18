@@ -1,9 +1,11 @@
 Package: SpaDES.docs
 Title: Helper Utilities for Creating SpaDES Module Documentation and Manuals
 Description: Groups several functions used to create SpaDES module manuals in Rmarkdown format output to HTML and LaTeX.
-URL: https://github.com/PredictiveEcology/SpaDES.docs
-Date: 2022-11-03
-Version: 0.0.1
+URL:
+    https://predictiveecology.github.io/SpaDES.docs/,
+    https://github.com/PredictiveEcology/SpaDES.docs
+Date: 2026-09-17
+Version: 0.1.0
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
@@ -15,19 +17,20 @@ Authors@R: c(
            role = "cph")
     )
 Depends:
-    R (>= 4.0)
+    R (>= 4.3)
 Imports:
     data.table,
     knitr,
     kableExtra,
-    modelr,
     pander,
     Require,
     stringi,
     utils
 Suggests:
     rmarkdown,
-    roxygen2
+    roxygen2,
+    testthat (>= 3.0.0),
+    withr
 Remotes:
     PredictiveEcology/Require
 Encoding: UTF-8
@@ -35,5 +38,6 @@ Language: en-CA
 License: GPL (>= 3)
 VignetteBuilder: knitr, rmarkdown
 BugReports: https://github.com/PredictiveEcology/SpaDES.docs/issues
+Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.2
