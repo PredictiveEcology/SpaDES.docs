@@ -5,15 +5,23 @@ export(panble)
 export(prepManualRmds)
 export(wrapStrFun)
 importFrom(Require,normPath)
-importFrom(data.table,data.table)
-importFrom(data.table,rbindlist)
-importFrom(kableExtra,column_spec)
-importFrom(kableExtra,kable_styling)
-importFrom(kableExtra,landscape)
-importFrom(knitr,is_latex_output)
-importFrom(knitr,kable)
-importFrom(knitr,opts_current)
-importFrom(pander,pander)
-importFrom(pander,panderOptions)
+importFrom(data.table,
+  data.table,
+  rbindlist
+)
+importFrom(kableExtra,
+  column_spec,
+  kable_styling,
+  landscape
+)
+importFrom(knitr,
+  is_latex_output,
+  kable,
+  opts_current
+)
+importFrom(pander,
+  pander,
+  panderOptions
+)
 importFrom(stringi,stri_sub)
 importFrom(utils,capture.output)
