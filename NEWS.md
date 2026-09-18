@@ -1,5 +1,9 @@
 # SpaDES.docs (development version)
 
+* new vignette, *Building a project manual*: the layout a manual uses, a runnable
+  minimal example, what `prepManualRmds()` does to each module `.Rmd` and why,
+  the build-script pattern, and the things that bite. Resolves the
+  `VignetteBuilder` field that had been declared against no vignette (#2);
 * **Breaking:** `prepManualRmds()` writes the generated chapters to a staging
   directory under the book root (`stagingPath`, default `_manual_rmds`) instead
   of into each module's own directory. Books must list the chapters from there
