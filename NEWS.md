@@ -17,8 +17,9 @@
   removed lines and then kept indexing the shortened vector with the original
   line numbers;
 * `prepManualRmds()` warns instead of continuing silently when `_bookdown.yml`
-  lists chapters that were not prepared, or when there are no modules to prepare
-  at all (#1);
+  lists chapters that were not prepared, and when there are no modules to prepare
+  at all. Note this does not yet cover #1, where the modules exist but every
+  module line in `_bookdown.yml` is commented out;
 * `rebuildCache` reaches the generated chapter when a module mentions
   `cache.rebuild` only in a comment;
 * `prepManualRmds()` no longer deletes a module's prose along with its YAML header. It removed
