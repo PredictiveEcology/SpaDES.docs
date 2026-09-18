@@ -1,5 +1,9 @@
 # SpaDES.docs (development version)
 
+* new vignette, *Building a project manual*: the layout a manual uses, a runnable
+  minimal example, what `prepManualRmds()` does to each module `.Rmd` and why,
+  the build-script pattern, and the things that bite. Resolves the
+  `VignetteBuilder` field that had been declared against no vignette (#2);
 * the README says what the package is for, points at the vignette, and lists the
   manuals built with it. pkgdown builds the site home page from it, so it is also
   the front page of <https://predictiveecology.github.io/SpaDES.docs/> (#3);
