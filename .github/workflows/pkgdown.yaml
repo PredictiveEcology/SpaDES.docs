@@ -1,0 +1,16 @@
+# Thin caller — shared logic lives in PredictiveEcology/actions (reusable workflow).
+# No `secrets:` block: that workflow uses only the automatic GITHUB_TOKEN.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+name: pkgdown
+
+jobs:
+  pkgdown:
+    uses: PredictiveEcology/actions/.github/workflows/pkgdown.yaml@main
