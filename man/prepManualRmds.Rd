@@ -8,7 +8,8 @@ prepManualRmds(
   modulePath,
   rebuildCache = FALSE,
   ignoreModules = NULL,
-  bookdownYML = "_bookdown.yml"
+  bookdownYML = "_bookdown.yml",
+  stagingPath = "_manual_rmds"
 )
 }
 \arguments{
@@ -26,6 +27,13 @@ Note that all modules must be in the same directory.}
 \item{bookdownYML}{path to the book's \verb{_bookdown.yml}, which supplies the
 chapter order used when de-duplicating text references across chapters.
 Read from the working directory by default.}
+
+\item{stagingPath}{directory the generated chapters are written to, relative
+to the book root. Nothing is written into the module directories, which are
+git submodules in every project that uses this package -- a failed build
+used to leave a \verb{<module>2.Rmd} in each one, and each module repository
+carried a \code{.gitignore} line to hide it. List the chapters from here in
+\verb{_bookdown.yml}, and add this directory to the book's \code{.gitignore}.}
 }
 \value{
 file paths of the modified module \code{.Rmd} files
