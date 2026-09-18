@@ -2,7 +2,8 @@
 ## per module, each holding <module>.Rmd. `body` is spliced in after the setup
 ## chunk, which every module .Rmd written from the SpaDES.core template has and
 ## which prepManualRmds() requires.
-writeModule <- function(name, modulePath, body = character(0), header = TRUE) {
+writeModule <- function(name, modulePath, body = character(0), header = TRUE,
+                        setup = TRUE) {
   dir.create(file.path(modulePath, name), recursive = TRUE, showWarnings = FALSE)
   yaml <- if (header) {
     c("---", paste0("title: \"", name, " Manual\""), "output: bookdown::html_document2", "---", "")
@@ -13,10 +14,9 @@ writeModule <- function(name, modulePath, body = character(0), header = TRUE) {
     c(yaml,
       paste0("# ", name, " Module"),
       "",
-      paste0("```{r setup-", name, ", include = FALSE}"),
-      "knitr::opts_chunk$set(echo = TRUE)",
-      "```",
-      "",
+      if (setup) c(paste0("```{r setup-", name, ", include = FALSE}"),
+                   "knitr::opts_chunk$set(echo = TRUE)",
+                   "```", ""),
       body),
     file.path(modulePath, name, paste0(name, ".Rmd"))
   )

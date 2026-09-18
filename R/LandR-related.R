@@ -26,12 +26,28 @@ utils::globalVariables(c(
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
 prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL) {
-  moduleRmds <- list.dirs(modulePath, recursive = FALSE)
-  if (!is.null(ignoreModules)) {
-    moduleRmds <- grep(x = moduleRmds, pattern = paste0(ignoreModules, collapse = "|"),
-                       invert = TRUE, value = TRUE)
+  moduleDirs <- list.dirs(modulePath, recursive = FALSE)
+
+  ## whole module names, not a regex alternation matched against the whole path.
+  ## As a pattern, "Biomass_core" also dropped "Biomass_coreTest", "mod" dropped
+  ## everything via the `modules/` path component, and character(0) collapsed to
+  ## "" -- which matches everything.
+  if (length(ignoreModules)) {
+    moduleDirs <- moduleDirs[!basename(moduleDirs) %in% ignoreModules]
   }
-  moduleRmds <- paste0(file.path(moduleRmds, basename(moduleRmds)), ".Rmd")
+
+  moduleRmds <- file.path(moduleDirs, paste0(basename(moduleDirs), ".Rmd"))
+
+  ## not every subdirectory is a module (hidden caches, retired modules). Without
+  ## this the copy silently returned FALSE and readLines() failed on a file that
+  ## was never created.
+  notModules <- !file.exists(moduleRmds)
+  if (any(notModules)) {
+    message("prepManualRmds(): skipping ", sum(notModules),
+            " director(ies) with no <name>.Rmd: ",
+            paste(basename(moduleDirs[notModules]), collapse = ", "))
+    moduleRmds <- moduleRmds[!notModules]
+  }
 
   copyModuleRmds <- sapply(moduleRmds, rebuildCache = rebuildCache,
                            FUN = function(x, rebuildCache) {
@@ -67,6 +83,13 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              ## make sure that setup chunk will be evaluated again
                              ## (a previous setup chunk may have set "eval = FALSE" and "cache = TRUE")
                              setupChunkStart <- which(grepl("```{r setup", linesModuleRmd, fixed = TRUE))
+                             if (length(setupChunkStart) != 1L) {
+                               ## every chunk-option fixup below writes into this one line, and the
+                               ## root.dir and cache settings the chapter needs go with it. Zero used
+                               ## to fail as `1:integer(0)`; two silently skipped every fixup.
+                               stop("prepManualRmds(): ", basename(x), " has ", length(setupChunkStart),
+                                    " setup chunk(s); expected exactly 1, opening with '```{r setup'")
+                             }
                              setupChunkOptions <- linesModuleRmd[setupChunkStart]
                              if (isFALSE(grepl("eval[[:space:]]*=[[:space:]]*TRUE", setupChunkOptions))) {
                                setupChunkOptions <- if (grepl("eval", setupChunkOptions)) {
@@ -87,19 +110,39 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              linesModuleRmd[setupChunkStart] <- setupChunkOptions
 
                              ## change root.dir for each .Rmd
-                             existsRootDirsSetup <- any(grepl("root\\.dir", linesModuleRmd))   ## only searching for argument instead of <function>(.*<arg>) as the code may be split into different lines
+                             ## inside the setup chunk only. Over the whole file a prose mention of
+                             ## root.dir was enough to trigger the rewrite, or to abort the build.
+                             chunkEnd <- grep("^[[:space:]]*```[[:space:]]*$", linesModuleRmd)
+                             chunkEnd <- chunkEnd[chunkEnd > setupChunkStart]
+                             chunkEnd <- if (length(chunkEnd)) chunkEnd[1] else length(linesModuleRmd)
+                             setupChunkLines <- seq.int(setupChunkStart, chunkEnd)
+                             existsRootDirsSetup <- any(grepl("root\\.dir", linesModuleRmd[setupChunkLines]))
                              if (existsRootDirsSetup) {
                                ## make sure the root.dir is the right one
-                               rootDirLine <- which(grepl("root\\.dir", linesModuleRmd))
+                               rootDirLine <- setupChunkLines[grepl("root\\.dir", linesModuleRmd[setupChunkLines])]
                                dir2replace <- normPath(dirname(copyModuleRmd))
                                code2replace <-  sub("(.*root\\.dir.*=[[:space:]]*)(.*)(\\))",
                                                     paste0("\\1", "'",  dir2replace, "'", "\\3"),
                                                     linesModuleRmd[rootDirLine])
+                               ## the substitution closes on the last ")" of the
+                               ## matched line, so a call split over several lines
+                               ## used to leave an orphaned ")" behind and the
+                               ## chunk stopped parsing. Fail loudly instead.
+                               if (length(rootDirLine) != 1L ||
+                                   !nzchar(code2replace) ||
+                                   inherits(try(parse(text = code2replace), silent = TRUE),
+                                            "try-error")) {
+                                 stop("prepManualRmds(): cannot rewrite root.dir in ",
+                                      basename(x), ". It must be set on a single line, ",
+                                      "e.g. knitr::opts_knit$set(root.dir = '..')")
+                               }
                                linesModuleRmd[rootDirLine] <- code2replace
                              } else {
                                ## break lines into 2 to add a working dir setup line
-                               beforeSetupChunkStart <- linesModuleRmd[1:setupChunkStart]
-                               afterSetupChunkStart <- linesModuleRmd[(setupChunkStart + 1):length(linesModuleRmd)]
+                               beforeSetupChunkStart <- linesModuleRmd[seq_len(setupChunkStart)]
+                               afterSetupChunkStart <- if (setupChunkStart < length(linesModuleRmd)) {
+                                 linesModuleRmd[seq.int(setupChunkStart + 1L, length(linesModuleRmd))]
+                               } else character(0)
 
                                addedCode <- paste0("knitr::opts_knit$set(root.dir = '", normPath(dirname(copyModuleRmd)), "')")
 
@@ -107,10 +150,15 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              }
 
                              ## add cache rebuild options for each .Rmd
-                             existsCacheRebuildSetup <- any(grepl("cache.rebuild", linesModuleRmd))
+                             ## branch on a settable occurrence, not on the word appearing anywhere.
+                             ## A module that only mentions cache.rebuild in a comment took the
+                             ## "already set" path, matched nothing, and injected nothing.
+                             cacheRebuildLine <- which(grepl(
+                               ",*[[:space:]]*cache.rebuild[[:space:]]*=[[:space:]]*(TRUE|FALSE)[[:space:]]*(,|\\})",
+                               linesModuleRmd))
+                             existsCacheRebuildSetup <- length(cacheRebuildLine) > 0L
                              if (existsCacheRebuildSetup) {
                                ## overwrite option
-                               cacheRebuildLine <- which(grepl(",*[[:space:]]*cache.rebuild[[:space:]]*=[[:space:]]*(TRUE|FALSE)[[:space:]]*(,|\\})", linesModuleRmd))
                                code2replace <- sub("(.*cache\\.rebuild.*=[[:space:]]*)(TRUE|FALSE)(.*)",
                                                    paste0("\\1", rebuildCache, "\\3"),
                                                    linesModuleRmd[cacheRebuildLine])
@@ -118,8 +166,10 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              } else {
                                ## break lines into 2 to add a cache rebuild dir setup line (it doesn't matter if there
                                ## is another call to `knitr::opts_chunk$set`)
-                               beforeSetupChunkStart <- linesModuleRmd[1:setupChunkStart]
-                               afterSetupChunkStart <- linesModuleRmd[(setupChunkStart + 1):length(linesModuleRmd)]
+                               beforeSetupChunkStart <- linesModuleRmd[seq_len(setupChunkStart)]
+                               afterSetupChunkStart <- if (setupChunkStart < length(linesModuleRmd)) {
+                                 linesModuleRmd[seq.int(setupChunkStart + 1L, length(linesModuleRmd))]
+                               } else character(0)
 
                                addedCode <- paste0("knitr::opts_chunk$set(cache.rebuild = ", rebuildCache, ")")
 
@@ -127,10 +177,15 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              }
 
                              ## if missing add chapter bibliography at the end of each module chapter:
-                             chapterBibLine <- grep("## References|# References", linesModuleRmd)
+                             ## a heading line only. The old pattern was unanchored, so a prose line
+                             ## mentioning "## References" matched, and two matches made the `if`
+                             ## below a length-2 condition -- an error on R >= 4.3.
+                             chapterBibLine <- grep("^#{1,4}[[:space:]]+References[[:space:]]*(\\{[^}]*\\})?[[:space:]]*$",
+                                                    linesModuleRmd)
 
                              ## if not in one of the last two lines, "move to the end"
                              if (length(chapterBibLine)) {
+                               chapterBibLine <- chapterBibLine[length(chapterBibLine)]
                                if (!chapterBibLine %in% c(length(linesModuleRmd), length(linesModuleRmd) - 1)) {
                                  chapterBibLineChar <- linesModuleRmd[chapterBibLine]
                                  linesModuleRmd <- linesModuleRmd[-chapterBibLine]
@@ -174,8 +229,20 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
 
   ## get the text ref lines and their line IDs
   refTextLinesID <- lapply(allModules, function(x) {
-    data.table(lineText = grep("^\\(ref\\:.*\\)", x, value = TRUE),
-               lineID = grep("^\\(ref\\:.*\\)", x))
+    if (!length(x)) {
+      return(data.table(lineText = character(0), lineID = integer(0)))
+    }
+    ## A bookdown text reference is its own paragraph. A line matching the same
+    ## pattern but following a non-blank line is a *use* inside prose, and
+    ## treating it as a definition deleted the sentence it was part of.
+    prev <- c("", x[-length(x)])
+    ## its own block: preceded by a blank line, an HTML comment or a heading.
+    ## LandR modules open the list with `<!-- text references ... -->` and no
+    ## blank line, so a blank-only rule missed the first definition.
+    ownBlock <- !nzchar(trimws(prev)) |
+      grepl("^[[:space:]]*(<!--|#)", prev)
+    isDef <- grepl("^\\(ref:[^)]+\\)", x) & ownBlock
+    data.table(lineText = x[isDef], lineID = which(isDef))
   })
   refTextLinesID <- rbindlist(refTextLinesID, idcol = "file", use.names = TRUE)
   refTextLinesID[, dups := duplicated(lineText)]
@@ -183,17 +250,20 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   lapply(split(refTextLinesID, by = "file"), function(dupsTab, allModules) {
     if (any(dupsTab$dups)) {
       modLines <- allModules[[unique(dupsTab$file)]]
-      modLines <- modLines[-dupsTab[which(dups), lineID]]
 
-      ## if now we have two empty lines, remove one
-      for (i in dupsTab[which(dups), lineID]) {
-        if (all(modLines[c(i, i + 1)] == "")) {
-          modLines <- modLines[-i]
-        }
-        if (all(modLines[c(i - 1, i)] == "")) {
-          modLines <- modLines[-i]
-        }
-      }
+      ## Drop in one pass, by mask. The loop this replaces removed the lines
+      ## first and then indexed the shortened vector with the original line
+      ## numbers, so every index past the first removal was wrong and could run
+      ## off the end -- `all(NA == "")` is NA, and `if (NA)` aborts.
+      drop <- dupsTab[which(dups), lineID]
+
+      ## a removal that leaves a blank line on each side collapses the pair, at
+      ## the removal site only -- a whole-chapter sweep would eat blank lines
+      ## inside fenced code blocks elsewhere in the file
+      blank <- !nzchar(trimws(modLines))
+      pad <- drop[drop > 1L & drop < length(modLines)]
+      pad <- pad[blank[pad - 1L] & blank[pad + 1L]]
+      modLines <- modLines[-sort(unique(c(drop, pad + 1L)))]
 
       writeLines(modLines, con = unique(dupsTab$file))
     }
