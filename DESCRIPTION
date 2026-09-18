@@ -5,7 +5,7 @@ URL:
     https://predictiveecology.github.io/SpaDES.docs/,
     https://github.com/PredictiveEcology/SpaDES.docs
 Date: 2026-09-18
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
@@ -28,8 +28,11 @@ Imports:
     utils,
     yaml
 Suggests:
+    RefManageR,
     rmarkdown,
     roxygen2,
+    rprojroot,
+    SpaDES.core,
     testthat (>= 3.0.0),
     withr
 Remotes:
@@ -41,4 +44,4 @@ VignetteBuilder: knitr, rmarkdown
 BugReports: https://github.com/PredictiveEcology/SpaDES.docs/issues
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+Config/roxygen2/version: 8.1.0
