@@ -33,3 +33,23 @@ test_that("manualPaths() errors when _bookdown.yml sets no output_dir", {
   ## silently defaulting here would render the book somewhere the deploy does not look
   expect_error(manualPaths(prjDir = "."), "does not set `output_dir`")
 })
+
+test_that("manualPaths() finds the project root when prjDir is not given", {
+  skip_if_not_installed("rprojroot")
+  localBookRoot()
+  ## a git root is one of the markers rprojroot is asked for
+  dir.create(".git")
+  p <- manualPaths()
+  expect_identical(normalizePath(p$prj, winslash = "/"),
+                   normalizePath(getwd(), winslash = "/"))
+})
+
+test_that("manualPaths() errors when prjDir does not exist", {
+  expect_error(manualPaths(prjDir = file.path(tempdir(), "no-such-dir")))
+})
+
+test_that("manualPaths() resolves a nested output_dir", {
+  localBookRoot("./docs/site")
+  p <- manualPaths(prjDir = ".", create = FALSE)
+  expect_match(p$docs, "docs/site$")
+})

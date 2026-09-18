@@ -81,3 +81,38 @@ test_that("collapseModuleBibs() returns the output path invisibly", {
 
   expect_invisible(collapseModuleBibs(outFile = "citations/references.bib"))
 })
+
+test_that("writePkgBib() writes entries for the packages it is given", {
+  skip_if_not_installed("RefManageR")
+  d <- withr::local_tempdir(); withr::local_dir(d)
+
+  ## not base packages: `stats` and `utils` have no standalone citation, so
+  ## write_bib() correctly produces nothing for them
+  out <- writePkgBib("citations/packages.bib", packages = c("knitr", "data.table"))
+  expect_true(file.exists(out))
+  keys <- names(RefManageR::ReadBib(out))
+  expect_true(all(c("R-knitr", "R-data.table") %in% keys))
+})
+
+test_that("writePkgBib() creates the directory it writes into", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  writePkgBib("nested/deeper/packages.bib", packages = "knitr")
+  expect_true(file.exists("nested/deeper/packages.bib"))
+})
+
+test_that("downloadCSL() keeps an existing style rather than re-fetching", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("citations")
+  writeLines("<style>not really a csl</style>", "citations/ecology-letters.csl")
+
+  ## no network: an existing file short-circuits the download
+  out <- expect_invisible(downloadCSL("ecology-letters", "citations"))
+  expect_identical(readLines(out), "<style>not really a csl</style>")
+})
+
+test_that("downloadCSL() returns the path it would write", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("citations")
+  file.create("citations/apa.csl")
+  expect_identical(basename(downloadCSL("apa", "citations")), "apa.csl")
+})

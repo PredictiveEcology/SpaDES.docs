@@ -14,8 +14,9 @@
 * `downloadCSL()` fetches a Citation Style Language file from the Zotero
   repository, keeping an existing copy so a build does not need the network
   (#15).
-* `installModulePkgs()` installs the packages a manual's modules declare. It
-  assigns the package list before installing rather than piping it, because
+* `installModulePkgs()` installs the packages a manual's modules declare, and
+  with `install = FALSE` resolves the list without installing. It assigns the
+  package list before installing rather than piping it, because
   `Require::Install()` calls `substitute()` on its first parameter and a piped
   expression resolves to the literal string `"packages"` (#15).
 * `manualPaths()` resolves a manual's root, rendered book, `citations` and

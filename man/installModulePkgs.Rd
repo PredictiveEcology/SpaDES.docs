@@ -4,7 +4,12 @@
 \alias{installModulePkgs}
 \title{Install the packages a manual's modules need}
 \usage{
-installModulePkgs(modulePath = "modules", modules = NULL, dependencies = TRUE)
+installModulePkgs(
+  modulePath = "modules",
+  modules = NULL,
+  dependencies = TRUE,
+  install = TRUE
+)
 }
 \arguments{
 \item{modulePath}{directory holding the module directories.}
@@ -15,9 +20,13 @@ under \code{modulePath}.}
 \item{dependencies}{whether to expand each module package's own dependencies
 with \code{\link[Require:pkgDep2]{Require::pkgDep2()}} before installing. \code{FALSE} installs only the
 packages the modules name.}
+
+\item{install}{whether to install. \code{FALSE} resolves the package list and
+returns it without installing anything, which is useful for seeing what a
+manual's modules ask for.}
 }
 \value{
-the packages passed to the installer, invisibly.
+the packages, invisibly.
 }
 \description{
 The modules a manual documents declare their own \code{reqdPkgs}, which the manual

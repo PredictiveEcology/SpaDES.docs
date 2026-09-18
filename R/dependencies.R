@@ -22,11 +22,15 @@
 #'  with [Require::pkgDep2()] before installing. `FALSE` installs only the
 #'  packages the modules name.
 #'
-#' @return the packages passed to the installer, invisibly.
+#' @param install whether to install. `FALSE` resolves the package list and
+#'  returns it without installing anything, which is useful for seeing what a
+#'  manual's modules ask for.
+#'
+#' @return the packages, invisibly.
 #'
 #' @export
 installModulePkgs <- function(modulePath = "modules", modules = NULL,
-                              dependencies = TRUE) {
+                              dependencies = TRUE, install = TRUE) {
   for (pkg in c("SpaDES.core", "Require")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop("installModulePkgs() needs the '", pkg, "' package to be installed.",
@@ -52,6 +56,8 @@ installModulePkgs <- function(modulePath = "modules", modules = NULL,
     modPkgs
   }
 
-  Require::Install(pkgs)
+  if (isTRUE(install)) {
+    Require::Install(pkgs)
+  }
   invisible(pkgs)
 }
