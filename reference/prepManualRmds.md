@@ -6,7 +6,13 @@ removed and adapted knitr setup chunks
 ## Usage
 
 ``` r
-prepManualRmds(modulePath, rebuildCache = FALSE, ignoreModules = NULL)
+prepManualRmds(
+  modulePath,
+  rebuildCache = FALSE,
+  ignoreModules = NULL,
+  bookdownYML = "_bookdown.yml",
+  stagingPath = "_manual_rmds"
+)
 ```
 
 ## Arguments
@@ -28,6 +34,22 @@ prepManualRmds(modulePath, rebuildCache = FALSE, ignoreModules = NULL)
 - ignoreModules:
 
   character vector of modules to ignore.
+
+- bookdownYML:
+
+  path to the book's `_bookdown.yml`, which supplies the chapter order
+  used when de-duplicating text references across chapters. Read from
+  the working directory by default.
+
+- stagingPath:
+
+  directory the generated chapters are written to, relative to the book
+  root. Nothing is written into the module directories, which are git
+  submodules in every project that uses this package – a failed build
+  used to leave a `<module>2.Rmd` in each one, and each module
+  repository carried a `.gitignore` line to hide it. List the chapters
+  from here in `_bookdown.yml`, and add this directory to the book's
+  `.gitignore`.
 
 ## Value
 

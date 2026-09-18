@@ -11,7 +11,7 @@ chunks"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ chunks"></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/building-a-project-manual.html">Building a project manual</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -33,7 +37,7 @@ chunks"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Prepare module .Rmd to render book</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.1.0/R/LandR-related.R" class="external-link"><code>R/LandR-related.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/R/LandR-related.R" class="external-link"><code>R/LandR-related.R</code></a></small>
       <div class="d-none name"><code>prepManualRmds.Rd</code></div>
     </div>
 
@@ -45,7 +49,13 @@ chunks</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">prepManualRmds</span><span class="op">(</span><span class="va">modulePath</span>, rebuildCache <span class="op">=</span> <span class="cn">FALSE</span>, ignoreModules <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">prepManualRmds</span><span class="op">(</span></span>
+<span>  <span class="va">modulePath</span>,</span>
+<span>  rebuildCache <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ignoreModules <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bookdownYML <span class="op">=</span> <span class="st">"_bookdown.yml"</span>,</span>
+<span>  stagingPath <span class="op">=</span> <span class="st">"_manual_rmds"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,6 +77,21 @@ Note that all modules must be in the same directory.</p></dd>
 
 <dt id="arg-ignoremodules">ignoreModules<a class="anchor" aria-label="anchor" href="#arg-ignoremodules"></a></dt>
 <dd><p>character vector of modules to ignore.</p></dd>
+
+
+<dt id="arg-bookdownyml">bookdownYML<a class="anchor" aria-label="anchor" href="#arg-bookdownyml"></a></dt>
+<dd><p>path to the book's <code>_bookdown.yml</code>, which supplies the
+chapter order used when de-duplicating text references across chapters.
+Read from the working directory by default.</p></dd>
+
+
+<dt id="arg-stagingpath">stagingPath<a class="anchor" aria-label="anchor" href="#arg-stagingpath"></a></dt>
+<dd><p>directory the generated chapters are written to, relative
+to the book root. Nothing is written into the module directories, which are
+git submodules in every project that uses this package – a failed build
+used to leave a <code>&lt;module&gt;2.Rmd</code> in each one, and each module repository
+carried a <code>.gitignore</code> line to hide it. List the chapters from here in
+<code>_bookdown.yml</code>, and add this directory to the book's <code>.gitignore</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

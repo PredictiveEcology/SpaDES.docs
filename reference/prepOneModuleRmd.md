@@ -1,13 +1,13 @@
 # Turn one module's `.Rmd` into a book chapter
 
-Copies `<module>/<module>.Rmd` to `<module>/<module>2.Rmd` and rewrites
-the copy in place. The module's own file is never modified. The steps,
-in order, because several depend on the one before:
+Copies `<module>/<module>.Rmd` to `<stagingPath>/<module>2.Rmd` and
+rewrites the copy. Nothing is written into the module's own directory.
+The steps, in order, because several depend on the one before:
 
 ## Usage
 
 ``` r
-prepOneModuleRmd(x, rebuildCache)
+prepOneModuleRmd(x, rebuildCache, stagingPath)
 ```
 
 ## Arguments
@@ -21,6 +21,11 @@ prepOneModuleRmd(x, rebuildCache)
   passed through from
   [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md);
   the value written into the chunk's `cache.rebuild` option.
+
+- stagingPath:
+
+  directory the chapter is written into. The module's own directory is
+  never written to; `root.dir` still points at it.
 
 ## Value
 

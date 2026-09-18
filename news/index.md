@@ -1,5 +1,51 @@
 # Changelog
 
+## SpaDES.docs 0.2.0
+
+- new vignette, *Building a project manual*: the layout a manual uses, a
+  runnable minimal example, what
+  [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  does to each module `.Rmd` and why, the build-script pattern, and the
+  things that bite. Resolves the `VignetteBuilder` field that had been
+  declared against no vignette
+  ([\#2](https://github.com/PredictiveEcology/SpaDES.docs/issues/2));
+- the README says what the package is for, points at the vignette, and
+  lists the manuals built with it. pkgdown builds the site home page
+  from it, so it is also the front page of
+  <https://predictiveecology.github.io/SpaDES.docs/>
+  ([\#3](https://github.com/PredictiveEcology/SpaDES.docs/issues/3));
+- **Breaking:**
+  [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  writes the generated chapters to a staging directory under the book
+  root (`stagingPath`, default `_manual_rmds`) instead of into each
+  module’s own directory. Books must list the chapters from there in
+  `_bookdown.yml`, and should add the directory to `.gitignore`. The
+  module directories are git submodules in every project that uses this
+  package: a failed build used to leave a `<module>2.Rmd` in each one,
+  and each module repository carried a `.gitignore` line to hide it.
+  Verified equivalent by rendering the same chapters from both locations
+  – the output is byte-identical, including relative images,
+  cross-references and citations;
+- chapters left by a previous run are cleared, so a module removed from
+  a project no longer lingers as an orphan chapter;
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  no longer fails when `_bookdown.yml` lists none of the modules under
+  `modulePath` – the case reported in
+  [\#1](https://github.com/PredictiveEcology/SpaDES.docs/issues/1),
+  where the modules exist but every module line is commented out. It
+  warns, writes the chapters, and skips the cross-chapter de-duplication
+  it cannot do
+  ([\#1](https://github.com/PredictiveEcology/SpaDES.docs/issues/1));
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  parses `_bookdown.yml` as YAML rather than by indentation. The old
+  `sub(" - ", ...)` assumed exactly two spaces, could not read the
+  flow-style `rmd_files: [a, b]` form, and counted a commented-out line
+  as a listed chapter;
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  gains argument `bookdownYML`, and checks the file exists before
+  writing anything. A missing book file used to surface only after every
+  `<module>2.Rmd` had been created, leaving them behind;
+
 ## SpaDES.docs 0.1.0
 
 - drop support for R 4.1 and 4.2;

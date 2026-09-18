@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/building-a-project-manual.html">Building a project manual</a></li>
+  </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -29,9 +33,23 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.1.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="spadesdocs-020">SpaDES.docs 0.2.0<a class="anchor" aria-label="anchor" href="#spadesdocs-020"></a></h2>
+<ul><li>new vignette, <em>Building a project manual</em>: the layout a manual uses, a runnable minimal example, what <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> does to each module <code>.Rmd</code> and why, the build-script pattern, and the things that bite. Resolves the <code>VignetteBuilder</code> field that had been declared against no vignette (<a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/2" class="external-link">#2</a>);</li>
+<li>the README says what the package is for, points at the vignette, and lists the manuals built with it. pkgdown builds the site home page from it, so it is also the front page of <a href="https://predictiveecology.github.io/SpaDES.docs/" class="uri">https://predictiveecology.github.io/SpaDES.docs/</a> (<a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/3" class="external-link">#3</a>);</li>
+<li>
+<strong>Breaking:</strong> <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> writes the generated chapters to a staging directory under the book root (<code>stagingPath</code>, default <code>_manual_rmds</code>) instead of into each module’s own directory. Books must list the chapters from there in <code>_bookdown.yml</code>, and should add the directory to <code>.gitignore</code>. The module directories are git submodules in every project that uses this package: a failed build used to leave a <code>&lt;module&gt;2.Rmd</code> in each one, and each module repository carried a <code>.gitignore</code> line to hide it. Verified equivalent by rendering the same chapters from both locations – the output is byte-identical, including relative images, cross-references and citations;</li>
+<li>chapters left by a previous run are cleared, so a module removed from a project no longer lingers as an orphan chapter;</li>
+<li>
+<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> no longer fails when <code>_bookdown.yml</code> lists none of the modules under <code>modulePath</code> – the case reported in <a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/1" class="external-link">#1</a>, where the modules exist but every module line is commented out. It warns, writes the chapters, and skips the cross-chapter de-duplication it cannot do (<a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/1" class="external-link">#1</a>);</li>
+<li>
+<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> parses <code>_bookdown.yml</code> as YAML rather than by indentation. The old <code>sub("  - ", ...)</code> assumed exactly two spaces, could not read the flow-style <code>rmd_files: [a, b]</code> form, and counted a commented-out line as a listed chapter;</li>
+<li>
+<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> gains argument <code>bookdownYML</code>, and checks the file exists before writing anything. A missing book file used to surface only after every <code>&lt;module&gt;2.Rmd</code> had been created, leaving them behind;</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="spadesdocs-010">SpaDES.docs 0.1.0<a class="anchor" aria-label="anchor" href="#spadesdocs-010"></a></h2>
 <ul><li>drop support for R 4.1 and 4.2;</li>

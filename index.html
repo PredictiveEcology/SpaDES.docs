@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,12 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/building-a-project-manual.html">Building a project manual</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -53,11 +59,47 @@
 <p>Helper utilities for creating SpaDES module documentation and manuals.</p>
 <!-- badges: start -->
 
+<p>A SpaDES module documents itself in <code>&lt;module&gt;/&lt;module&gt;.Rmd</code>, written to be knitted on its own. A <em>project manual</em> is a <a href="https://bookdown.org" class="external-link">bookdown</a> book that gathers several of those files into one document, with continuous chapter numbering, one bibliography, and a PDF.</p>
+<p>They are not the same document. A chapter has no YAML header of its own, its cross-reference labels share a namespace with every other chapter, and its working directory is the book’s rather than the module’s. <code><a href="reference/prepManualRmds.html">prepManualRmds()</a></code> reconciles the two, and the rest of the package is the table and caption helpers those manuals use.</p>
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://predictiveecology.github.io/SpaDES.docs/">SpaDES.docs</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## from the book root, where _bookdown.yml lives</span></span>
+<span><span class="va">chapters</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepManualRmds.html">prepManualRmds</a></span><span class="op">(</span>modulePath <span class="op">=</span> <span class="st">"../modules"</span><span class="op">)</span></span></code></pre></div>
+<p>See <a href="https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.html"><strong>Building a project manual</strong></a> for the whole workflow: the directory layout, a runnable example, what <code><a href="reference/prepManualRmds.html">prepManualRmds()</a></code> does to each module <code>.Rmd</code> and why, the build-script pattern, and the things that bite.</p>
+</div>
+<div class="section level2">
+<h2 id="manuals-built-with-it">Manuals built with it<a class="anchor" aria-label="anchor" href="#manuals-built-with-it"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<tbody>
+<tr>
+<td><a href="https://github.com/PredictiveEcology/LandWeb" class="external-link">LandWeb</a></td>
+<td>the reference implementation. <code>manual/</code> inside an active project, rendered to <code>docs/</code>. Start here</td>
+</tr>
+<tr>
+<td><a href="https://github.com/PredictiveEcology/fireSenseManual" class="external-link">fireSenseManual</a></td>
+<td>the variant where the manual is its own repository rather than a directory inside a project</td>
+</tr>
+<tr>
+<td><a href="https://github.com/PredictiveEcology/LandR-Manual" class="external-link">LandR-Manual</a></td>
+<td>the oldest of the three, and not currently maintained; useful as a reference, not as a template</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p><code>SpaDES.docs</code> is not on CRAN. Install it with <a href="https://github.com/PredictiveEcology/Require" class="external-link"><code>Require</code></a>, which is what the SpaDES workflows use and which resolves this package’s own GitHub dependencies:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("Require")</span></span>
 <span><span class="fu">Require</span><span class="fu">::</span><span class="fu"><a href="https://Require.predictiveecology.org/reference/Require.html" class="external-link">Require</a></span><span class="op">(</span><span class="st">"PredictiveEcology/SpaDES.docs"</span>, require <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
