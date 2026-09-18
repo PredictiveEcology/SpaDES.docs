@@ -1,3 +1,5 @@
+# SpaDES.docs 0.3.0.9000
+
 # SpaDES.docs 0.3.0
 
 * `prepManualRmds()` warns when it prepares a chapter that `_bookdown.yml` does
