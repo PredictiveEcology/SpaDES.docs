@@ -285,13 +285,27 @@ prepOneModuleRmd <- function(x, rebuildCache) {
 #'
 #' @param ignoreModules character vector of modules to ignore.
 #'
+#' @param bookdownYML path to the book's `_bookdown.yml`, which supplies the
+#'  chapter order used when de-duplicating text references across chapters.
+#'  Read from the working directory by default.
+#'
 #' @return file paths of the modified module `.Rmd` files
 #'
 #' @export
 #' @importFrom Require normPath
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
-prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL) {
+prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL,
+                           bookdownYML = "_bookdown.yml") {
+  ## checked before anything is written: a missing or unreadable book file used
+  ## to surface only after every <module>2.Rmd had been created, leaving them
+  ## behind for the caller to clean up
+  if (!file.exists(bookdownYML)) {
+    stop("prepManualRmds(): cannot find '", bookdownYML, "'. It is read from the ",
+         "working directory unless `bookdownYML` says otherwise.")
+  }
+  rmdFiles <- unlist(yaml::read_yaml(bookdownYML)[["rmd_files"]], use.names = FALSE)
+
   moduleDirs <- list.dirs(modulePath, recursive = FALSE)
 
   ## whole module names. As a regex alternation over the whole path,
@@ -329,14 +343,12 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   copyModuleRmds <- vapply(moduleRmds, prepOneModuleRmd, rebuildCache = rebuildCache,
                            FUN.VALUE = character(1))
 
-  ## chapter order comes from _bookdown.yml, read from the working directory
-  bkdwnYML <- readLines("_bookdown.yml", warn = FALSE)
-  grepStr <- paste0("^", gsub(".", "\\.", gsub("/", "\\/", modulePath, fixed = TRUE), fixed = TRUE))
-  if (!grepl("\\/$", grepStr)) {
-    grepStr <- paste0(grepStr, "\\/")
-  }
-  bkdwnYMLsub <- sub("  - ", "", bkdwnYML, fixed = TRUE)
-  bkdwnYMLsub <- normPath(bkdwnYMLsub[grepl(grepStr, bkdwnYMLsub)])
+  ## chapter order, for the chapters under modulePath. Parsed rather than
+  ## pattern-matched: sub("  - ", ...) assumed exactly two spaces of indent and
+  ## could not see the flow-style `rmd_files: [a, b]` form, and it treated a
+  ## commented-out line as a listed chapter.
+  underModulePath <- startsWith(rmdFiles, paste0(sub("/+$", "", modulePath), "/"))
+  bkdwnYMLsub <- normPath(rmdFiles[underModulePath])
 
   allModules <- lapply(copyModuleRmds, readLines, warn = FALSE)
   names(allModules) <- normPath(copyModuleRmds)
@@ -352,6 +364,16 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
             paste(basename(listedNotPrepped), collapse = ", "), call. = FALSE)
   }
   allModules <- allModules[intersect(bkdwnYMLsub, names(allModules))]
+
+  ## nothing to de-duplicate against. The chapters are written and usable, so
+  ## this is a warning, not an error -- it used to reach the table below and die
+  ## with "object 'lineText' not found". See PredictiveEcology/SpaDES.docs#1.
+  if (!length(allModules)) {
+    warning("prepManualRmds(): '", bookdownYML, "' lists no chapters under '",
+            modulePath, "', so text references were not de-duplicated. ",
+            "The chapters were still written.", call. = FALSE)
+    return(copyModuleRmds)
+  }
 
   refTextLinesID <- lapply(allModules, function(x) {
     ids <- textRefDefs(x)

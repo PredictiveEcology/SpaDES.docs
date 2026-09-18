@@ -4,7 +4,12 @@
 \alias{prepManualRmds}
 \title{Prepare module .Rmd to render book}
 \usage{
-prepManualRmds(modulePath, rebuildCache = FALSE, ignoreModules = NULL)
+prepManualRmds(
+  modulePath,
+  rebuildCache = FALSE,
+  ignoreModules = NULL,
+  bookdownYML = "_bookdown.yml"
+)
 }
 \arguments{
 \item{modulePath}{modules' folder directory, specified exactly as in \verb{_bookdown.yml}.
@@ -17,6 +22,10 @@ Note that all modules must be in the same directory.}
 \item{rebuildCache}{should cached chunks be re-executed?}
 
 \item{ignoreModules}{character vector of modules to ignore.}
+
+\item{bookdownYML}{path to the book's \verb{_bookdown.yml}, which supplies the
+chapter order used when de-duplicating text references across chapters.
+Read from the working directory by default.}
 }
 \value{
 file paths of the modified module \code{.Rmd} files
