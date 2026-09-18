@@ -29,7 +29,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.1.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -44,7 +44,7 @@
 <li>
 <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> no longer crashes de-duplicating text references. It removed lines and then kept indexing the shortened vector with the original line numbers;</li>
 <li>
-<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> warns instead of continuing silently when <code>_bookdown.yml</code> lists chapters that were not prepared, or when there are no modules to prepare at all (<a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/1" class="external-link">#1</a>);</li>
+<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> warns instead of continuing silently when <code>_bookdown.yml</code> lists chapters that were not prepared, and when there are no modules to prepare at all. Note this does not yet cover <a href="https://github.com/PredictiveEcology/SpaDES.docs/issues/1" class="external-link">#1</a>, where the modules exist but every module line in <code>_bookdown.yml</code> is commented out;</li>
 <li>
 <code>rebuildCache</code> reaches the generated chapter when a module mentions <code>cache.rebuild</code> only in a comment;</li>
 <li>

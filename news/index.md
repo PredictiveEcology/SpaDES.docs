@@ -25,9 +25,11 @@
   numbers;
 - [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
   warns instead of continuing silently when `_bookdown.yml` lists
-  chapters that were not prepared, or when there are no modules to
-  prepare at all
-  ([\#1](https://github.com/PredictiveEcology/SpaDES.docs/issues/1));
+  chapters that were not prepared, and when there are no modules to
+  prepare at all. Note this does not yet cover
+  [\#1](https://github.com/PredictiveEcology/SpaDES.docs/issues/1),
+  where the modules exist but every module line in `_bookdown.yml` is
+  commented out;
 - `rebuildCache` reaches the generated chapter when a module mentions
   `cache.rebuild` only in a comment;
 - [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
