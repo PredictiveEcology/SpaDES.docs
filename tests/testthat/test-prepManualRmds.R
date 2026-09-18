@@ -46,12 +46,16 @@ test_that("prepManualRmds() writes one <module>2.Rmd per module and leaves sourc
   expect_length(grep("^---$", src), 2)
 })
 
-test_that("prepManualRmds() errors clearly when a module has no setup chunk", {
+test_that("prepManualRmds() synthesizes a setup chunk when a module has none", {
   localBook("modE")
   writeModule("modE", "modules", body = "Body.", setup = FALSE)
 
-  ## was: Error in 1:setupChunkStart : argument of length 0
-  expect_error(prepManualRmds("modules"), "setup chunk")
+  ## was: Error in 1:setupChunkStart : argument of length 0. Refusing instead
+  ## would stop the whole book -- the five fireSense modules have no setup
+  ## chunk, and the chapter still needs somewhere to carry root.dir.
+  chapter <- readLines(prepManualRmds("modules"))
+  expect_length(grep("^```\\{r setup-modE", chapter), 1)
+  expect_length(grep("opts_knit\\$set\\(root\\.dir", chapter), 1)
 })
 
 test_that("prepManualRmds() errors clearly when a module has two setup chunks", {
@@ -61,7 +65,7 @@ test_that("prepManualRmds() errors clearly when a module has two setup chunks", 
 
   ## was: silently skipped every chunk-option fixup, then warned about a
   ## "numerical expression with 2 elements" and used the first
-  expect_error(prepManualRmds("modules"), "setup chunk")
+  expect_error(prepManualRmds("modules"), "setup chunks")
 })
 
 test_that("prepManualRmds() copes with more than one References heading", {
@@ -196,7 +200,10 @@ test_that("ignoreModules matches whole module names, not substrings", {
   localBook(c("modR", "modRExtra"))
   for (m in c("modR", "modRExtra")) writeModule(m, "modules", body = "Body.")
 
-  out <- prepManualRmds("modules", ignoreModules = "modR")
+  ## _bookdown.yml still lists modR, so the de-duplication scope narrows and
+  ## prepManualRmds() says so
+  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modR"),
+                 "not de-duplicated")
   expect_setequal(basename(out), "modRExtra2.Rmd")
 })
 
@@ -267,4 +274,26 @@ test_that("a prose mention of root.dir does not derail the rewrite", {
   chapter <- readLines(prepManualRmds("modules"))
   expect_length(grep("opts_knit\\$set\\(root\\.dir", chapter), 1)
   expect_length(grep("Set `root.dir` if you knit", chapter, fixed = TRUE), 1)
+})
+
+test_that("prepManualRmds() warns and returns nothing when no modules match", {
+  localBook("modAA")
+  writeModule("modAA", "modules", body = "Body.")
+
+  ## every module ignored: used to return a `named list()` -- the wrong type,
+  ## silently. See #1.
+  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modAA"),
+                 "no modules to prepare")
+  expect_identical(out, character(0))
+})
+
+test_that("prepManualRmds() warns on a directory with no modules in it", {
+  localBook("modAB")
+  writeModule("modAB", "modules", body = "Body.")
+  dir.create("empty")
+
+  ## used to reach the de-duplication pass and die with
+  ## "object 'lineText' not found". This is the failure reported in #1.
+  expect_warning(out <- prepManualRmds("empty"), "no modules to prepare")
+  expect_identical(out, character(0))
 })
