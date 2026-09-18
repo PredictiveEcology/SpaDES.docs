@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.1.0
 
 * drop support for R 4.1 and 4.2;
 * `prepManualRmds()` gains argument `ignoreModules`. It matches whole module
