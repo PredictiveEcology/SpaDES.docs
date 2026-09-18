@@ -6,6 +6,24 @@
   absent from the book. It matters most for a manual that takes its module list
   from somewhere other than git submodules, where adding a module and forgetting
   the chapter entry is easy to do (#14).
+* `collapseModuleBibs()` merges the modules' `references_*.bib` files, and any
+  the manual supplies, into the single bibliography bookdown wants. Files with
+  no entries are skipped: a module that cites nothing yet ships a comments-only
+  `.bib`, which `RefManageR::ReadBib()` fails on, taking a whole manual down
+  over one placeholder (#15).
+* `downloadCSL()` fetches a Citation Style Language file from the Zotero
+  repository, keeping an existing copy so a build does not need the network
+  (#15).
+* `installModulePkgs()` installs the packages a manual's modules declare. It
+  assigns the package list before installing rather than piping it, because
+  `Require::Install()` calls `substitute()` on its first parameter and a piped
+  expression resolves to the literal string `"packages"` (#15).
+* `manualPaths()` resolves a manual's root, rendered book, `citations` and
+  `figures` directories, reading `output_dir` from `_bookdown.yml` (#15).
+* `stagePagesFiles()` writes `.nojekyll`, and optionally `CNAME`, into the
+  rendered book directory. A deploy publishes the contents of that directory, so
+  these files never reach the site if written to the repository root (#15).
+* `writePkgBib()` writes a bibliography for the R packages in use (#15).
 
 # SpaDES.docs 0.2.0
 

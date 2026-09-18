@@ -28,8 +28,11 @@ Imports:
     utils,
     yaml
 Suggests:
+    RefManageR,
     rmarkdown,
     roxygen2,
+    rprojroot,
+    SpaDES.core,
     testthat (>= 3.0.0),
     withr
 Remotes:
