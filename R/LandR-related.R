@@ -40,11 +40,19 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
                              file.copy(x, copyModuleRmd, overwrite = TRUE)
 
                              ## strip module.Rmd YAML headers -----
+                             ## Only the header: the first two `---` delimiters, and only when
+                             ## nothing but whitespace precedes the first. A `---` anywhere else
+                             ## is a thematic rule, and taking the range from the first delimiter
+                             ## to the last -- which is what modelr::seq_range(ids, by = 1) did --
+                             ## deleted the header and every line of prose above that rule, with
+                             ## no error. SpaDES.core::moduleRmdToVignette() reads the same file
+                             ## this way.
                              linesModuleRmd <- readLines(copyModuleRmd)
                              ids <- which(linesModuleRmd == "---")
-                             if (length(ids) > 0) {
-                               lines2Rm <- modelr::seq_range(ids, by = 1)
-                               linesModuleRmd <- linesModuleRmd[-lines2Rm]
+                             hasHeader <- length(ids) >= 2L &&
+                               !any(nzchar(trimws(linesModuleRmd[seq_len(ids[1] - 1L)])))
+                             if (hasHeader) {
+                               linesModuleRmd <- linesModuleRmd[-seq(ids[1], ids[2])]
                              }
 
                              ## add chapter title if not present
