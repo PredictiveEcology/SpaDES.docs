@@ -106,7 +106,7 @@ writeLines(head(readLines(chapters[1]), 8))
     #> 
     #> ```{r setup-myModule, include = FALSE, eval = TRUE, cache = FALSE}
     #> knitr::opts_chunk$set(cache.rebuild = FALSE)
-    #> knitr::opts_knit$set(root.dir = '/tmp/RtmpUSeNVZ/exampleProject/modules/myModule')
+    #> knitr::opts_knit$set(root.dir = '/tmp/RtmpZd2oqr/exampleProject/modules/myModule')
     #> knitr::opts_chunk$set(echo = TRUE)
     #> ```
 

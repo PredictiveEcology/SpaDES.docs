@@ -16,7 +16,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/PredictiveEcology/SpaDES.docs/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.2.0/DESCRIPTION)
 
 Chubaty A, Barros C, McIntire E (2026). *SpaDES.docs: Helper Utilities
 for Creating SpaDES Module Documentation and Manuals*. R package version
