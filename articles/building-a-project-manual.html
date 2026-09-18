@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/building-a-project-manual.html">Building a project manual</a></li>
+<li><a class="dropdown-item" href="../articles/building-a-continuously-updated-manual.html">Building a continuously updated manual</a></li>
+    <li><a class="dropdown-item" href="../articles/building-a-project-manual.html">Building a project manual</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -59,7 +60,7 @@
       <h1>Building a project manual</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.2.0/vignettes/building-a-project-manual.Rmd" class="external-link"><code>vignettes/building-a-project-manual.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/vignettes/building-a-project-manual.Rmd" class="external-link"><code>vignettes/building-a-project-manual.Rmd</code></a></small>
       <div class="d-none name"><code>building-a-project-manual.Rmd</code></div>
     </div>
 
@@ -70,6 +71,13 @@
 be knitted on its own, from beside the module. A project manual is a <a href="https://bookdown.org" class="external-link">bookdown</a> book that gathers several of
 those files into one document, with continuous chapter numbering, one
 bibliography and a PDF.</p>
+<p>This vignette is about a manual that documents the modules <strong>as
+a particular project used them</strong>, so it pins them. A manual that
+instead tracks the modules as they are now, rebuilding itself as they
+change, is a different arrangement – see
+<code><a href="../articles/building-a-continuously-updated-manual.html">vignette("building-a-continuously-updated-manual")</a></code>. The
+difference is not the book; it is whether the modules are pinned or
+tracked, and almost everything else follows from that.</p>
 <p>The two are not the same document, and the differences are not
 cosmetic. A chapter has no YAML header of its own, its cross-reference
 labels share a namespace with every other chapter, and its working
@@ -83,7 +91,7 @@ bite.</p>
 <p>The layout every PredictiveEcology manual uses, and the one this
 package assumes:</p>
 <pre><code>&lt;project&gt;/
-  modules/            # the modules, usually git submodules
+  modules/            # the modules, pinned as git submodules
     Biomass_core/
       Biomass_core.Rmd
   manual/             # the book
@@ -95,9 +103,9 @@ package assumes:</p>
   docs/               # rendered output, served by GitHub Pages</code></pre>
 <p><a href="https://github.com/PredictiveEcology/LandWeb" class="external-link">LandWeb</a> is
 the reference implementation; <code>manual/build.R</code> there is the
-script this vignette generalises. <a href="https://github.com/PredictiveEcology/fireSenseManual" class="external-link">fireSenseManual</a>
-is the variant where the manual is its own repository rather than a
-directory inside a project.</p>
+script this vignette generalises. The submodules are the point: they
+record the module commits the project ran, so the manual and the results
+it describes agree.</p>
 </div>
 <div class="section level2">
 <h2 id="a-minimal-worked-example">A minimal worked example<a class="anchor" aria-label="anchor" href="#a-minimal-worked-example"></a>
@@ -152,7 +160,7 @@ rewritten:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ```{r setup-myModule, include = FALSE, eval = TRUE, cache = FALSE}</span></span>
 <span><span class="co">#&gt; knitr::opts_chunk$set(cache.rebuild = FALSE)</span></span>
-<span><span class="co">#&gt; knitr::opts_knit$set(root.dir = '/tmp/RtmpZd2oqr/exampleProject/modules/myModule')</span></span>
+<span><span class="co">#&gt; knitr::opts_knit$set(root.dir = '/tmp/Rtmpl2Q6Zb/exampleProject/modules/myModule')</span></span>
 <span><span class="co">#&gt; knitr::opts_chunk$set(echo = TRUE)</span></span>
 <span><span class="co">#&gt; ```</span></span></code></pre>
 </div>
@@ -217,21 +225,30 @@ alone.</p>
 </h2>
 <p>The pattern, reduced from LandWeb’s <code>manual/build.R</code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">prjDir</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.project</span><span class="fu">::</span><span class="fu">findProjectPath</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">manDir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">prjDir</span>, <span class="st">"manual"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="va">manDir</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/manualPaths.html">manualPaths</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">## collect each module's references into one book-level bibliography</span></span>
-<span><span class="va">bibFiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">prjDir</span>, <span class="st">"modules"</span><span class="op">)</span>, <span class="st">"references_.*[.]bib$"</span>,</span>
-<span>                       recursive <span class="op">=</span> <span class="cn">TRUE</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">bib</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Reduce</a></span><span class="op">(</span><span class="va">merge</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">bibFiles</span>, <span class="fu">RefManageR</span><span class="fu">::</span><span class="va">ReadBib</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">RefManageR</span><span class="fu">::</span><span class="fu">WriteBib</span><span class="op">(</span><span class="va">bib</span>, file <span class="op">=</span> <span class="st">"citations/references.bib"</span><span class="op">)</span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/writePkgBib.html">writePkgBib</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="st">"packages.bib"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/collapseModuleBibs.html">collapseModuleBibs</a></span><span class="op">(</span></span>
+<span>  modulePath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">prj</span>, <span class="st">".."</span>, <span class="st">"modules"</span><span class="op">)</span>,</span>
+<span>  extraBibs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="st">"packages.bib"</span><span class="op">)</span>,</span>
+<span>  outFile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="st">"references.bib"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">chapters</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/prepManualRmds.html">prepManualRmds</a></span><span class="op">(</span><span class="st">"../modules"</span>, rebuildCache <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">bookdown</span><span class="fu">::</span><span class="fu">render_book</span><span class="op">(</span>output_format <span class="op">=</span> <span class="st">"all"</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/archiveManualPDF.html">archiveManualPDF</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">docs</span>, <span class="st">"LandWebManual.pdf"</span><span class="op">)</span>,</span>
+<span>  version <span class="op">=</span> <span class="st">"1.0.0"</span>, prefix <span class="op">=</span> <span class="st">"LandWeb-manual"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="st">"_manual_rmds"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>   <span class="co"># the generated chapters are disposable</span></span></code></pre></div>
+<p><code><a href="../reference/collapseModuleBibs.html">collapseModuleBibs()</a></code> skips <code>.bib</code> files with
+no entries. A module that cites nothing yet reasonably ships a
+comments-only placeholder, and <code><a href="https://docs.ropensci.org/RefManageR/reference/ReadBib.html" class="external-link">RefManageR::ReadBib()</a></code> fails
+on a file with no entries – which is enough to take down a whole
+manual.</p>
 </div>
 <div class="section level2">
 <h2 id="things-that-bite">Things that bite<a class="anchor" aria-label="anchor" href="#things-that-bite"></a>
@@ -243,9 +260,10 @@ directory, and in these projects those are git submodules. Every module
 repository therefore needed its own <code>.gitignore</code> line, and a
 failed build left a file in each one.</p>
 <p><strong>Chapter order comes from <code>_bookdown.yml</code>, not from
-the filesystem.</strong> A module that is generated but not listed is
-not de-duplicated against the others, and <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code>
-warns when that happens.</p>
+the filesystem.</strong> <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> warns in both
+directions: a chapter listed but not prepared is not de-duplicated
+against the others, and a chapter prepared but not listed is written,
+builds cleanly, and is simply absent from the book.</p>
 <p><strong>Run it from the book root.</strong>
 <code>_bookdown.yml</code> is read from the working directory by
 default; pass <code>bookdownYML</code> if it is elsewhere.</p>

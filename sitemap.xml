@@ -1,20 +1,28 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/404.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/LICENSE.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/articles/building-a-continuously-updated-manual.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/articles/index.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/authors.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/index.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/news/index.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/addLabel.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/archiveManualPDF.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/chunkLines.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/classifyRmdLines.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/collapseModuleBibs.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/downloadCSL.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/ensureSetupChunk.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/index.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/installModulePkgs.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/manualPaths.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/panble.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/prepOneModuleRmd.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/stagePagesFiles.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/textRefDefs.html</loc></url>
 <url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/wrapStrFun.html</loc></url>
+<url><loc>https://predictiveecology.github.io/SpaDES.docs/reference/writePkgBib.html</loc></url>
 </urlset>
 

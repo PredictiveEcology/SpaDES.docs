@@ -39,17 +39,18 @@ prepManualRmds(
 
   path to the book's `_bookdown.yml`, which supplies the chapter order
   used when de-duplicating text references across chapters. Read from
-  the working directory by default.
+  the working directory by default. A chapter that is prepared but not
+  listed here is reported: it would otherwise be absent from the book
+  without the build failing.
 
 - stagingPath:
 
   directory the generated chapters are written to, relative to the book
-  root. Nothing is written into the module directories, which are git
-  submodules in every project that uses this package – a failed build
-  used to leave a `<module>2.Rmd` in each one, and each module
-  repository carried a `.gitignore` line to hide it. List the chapters
-  from here in `_bookdown.yml`, and add this directory to the book's
-  `.gitignore`.
+  root. Nothing is written into the module directories: a failed build
+  used to leave a `<module>2.Rmd` in each one, dirtying every module
+  checkout, and each module repository carried a `.gitignore` line to
+  hide it. List the chapters from here in `_bookdown.yml`, and add this
+  directory to the book's `.gitignore`.
 
 ## Value
 

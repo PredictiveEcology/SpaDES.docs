@@ -6,6 +6,14 @@ manual is a [bookdown](https://bookdown.org) book that gathers several
 of those files into one document, with continuous chapter numbering, one
 bibliography and a PDF.
 
+This vignette is about a manual that documents the modules **as a
+particular project used them**, so it pins them. A manual that instead
+tracks the modules as they are now, rebuilding itself as they change, is
+a different arrangement – see
+[`vignette("building-a-continuously-updated-manual")`](https://predictiveecology.github.io/SpaDES.docs/articles/building-a-continuously-updated-manual.md).
+The difference is not the book; it is whether the modules are pinned or
+tracked, and almost everything else follows from that.
+
 The two are not the same document, and the differences are not cosmetic.
 A chapter has no YAML header of its own, its cross-reference labels
 share a namespace with every other chapter, and its working directory is
@@ -20,7 +28,7 @@ The layout every PredictiveEcology manual uses, and the one this package
 assumes:
 
     <project>/
-      modules/            # the modules, usually git submodules
+      modules/            # the modules, pinned as git submodules
         Biomass_core/
           Biomass_core.Rmd
       manual/             # the book
@@ -33,10 +41,9 @@ assumes:
 
 [LandWeb](https://github.com/PredictiveEcology/LandWeb) is the reference
 implementation; `manual/build.R` there is the script this vignette
-generalises.
-[fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual)
-is the variant where the manual is its own repository rather than a
-directory inside a project.
+generalises. The submodules are the point: they record the module
+commits the project ran, so the manual and the results it describes
+agree.
 
 ## A minimal worked example
 
@@ -106,7 +113,7 @@ writeLines(head(readLines(chapters[1]), 8))
     #> 
     #> ```{r setup-myModule, include = FALSE, eval = TRUE, cache = FALSE}
     #> knitr::opts_chunk$set(cache.rebuild = FALSE)
-    #> knitr::opts_knit$set(root.dir = '/tmp/RtmpZd2oqr/exampleProject/modules/myModule')
+    #> knitr::opts_knit$set(root.dir = '/tmp/Rtmpl2Q6Zb/exampleProject/modules/myModule')
     #> knitr::opts_chunk$set(echo = TRUE)
     #> ```
 
@@ -136,22 +143,33 @@ The pattern, reduced from LandWeb’s `manual/build.R`:
 
 ``` r
 
-prjDir <- SpaDES.project::findProjectPath()
-manDir <- file.path(prjDir, "manual")
-setwd(manDir)
+paths <- SpaDES.docs::manualPaths()
 
-## collect each module's references into one book-level bibliography
-bibFiles <- list.files(file.path(prjDir, "modules"), "references_.*[.]bib$",
-                       recursive = TRUE, full.names = TRUE)
-bib <- Reduce(merge, lapply(bibFiles, RefManageR::ReadBib))
-RefManageR::WriteBib(bib, file = "citations/references.bib")
+SpaDES.docs::writePkgBib(file.path(paths$citations, "packages.bib"))
+SpaDES.docs::collapseModuleBibs(
+  modulePath = file.path(paths$prj, "..", "modules"),
+  extraBibs = file.path(paths$citations, "packages.bib"),
+  outFile = file.path(paths$citations, "references.bib")
+)
 
 chapters <- SpaDES.docs::prepManualRmds("../modules", rebuildCache = FALSE)
 
 bookdown::render_book(output_format = "all", envir = new.env())
 
+SpaDES.docs::archiveManualPDF(
+  file.path(paths$docs, "LandWebManual.pdf"),
+  version = "1.0.0", prefix = "LandWeb-manual"
+)
+
 unlink("_manual_rmds", recursive = TRUE)   # the generated chapters are disposable
 ```
+
+[`collapseModuleBibs()`](https://predictiveecology.github.io/SpaDES.docs/reference/collapseModuleBibs.md)
+skips `.bib` files with no entries. A module that cites nothing yet
+reasonably ships a comments-only placeholder, and
+[`RefManageR::ReadBib()`](https://docs.ropensci.org/RefManageR/reference/ReadBib.html)
+fails on a file with no entries – which is enough to take down a whole
+manual.
 
 ## Things that bite
 
@@ -161,11 +179,11 @@ each module’s own directory, and in these projects those are git
 submodules. Every module repository therefore needed its own
 `.gitignore` line, and a failed build left a file in each one.
 
-**Chapter order comes from `_bookdown.yml`, not from the filesystem.** A
-module that is generated but not listed is not de-duplicated against the
-others, and
+**Chapter order comes from `_bookdown.yml`, not from the filesystem.**
 [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
-warns when that happens.
+warns in both directions: a chapter listed but not prepared is not
+de-duplicated against the others, and a chapter prepared but not listed
+is written, builds cleanly, and is simply absent from the book.
 
 **Run it from the book root.** `_bookdown.yml` is read from the working
 directory by default; pass `bookdownYML` if it is elsewhere.
