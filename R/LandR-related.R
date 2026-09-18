@@ -133,8 +133,8 @@ textRefDefs <- function(lines) {
 
 #' Turn one module's `.Rmd` into a book chapter
 #'
-#' Copies `<module>/<module>.Rmd` to `<module>/<module>2.Rmd` and rewrites the
-#' copy in place. The module's own file is never modified. The steps, in order,
+#' Copies `<module>/<module>.Rmd` to `<stagingPath>/<module>2.Rmd` and rewrites
+#' the copy. Nothing is written into the module's own directory. The steps, in order,
 #' because several depend on the one before:
 #'
 #' \enumerate{
@@ -155,17 +155,19 @@ textRefDefs <- function(lines) {
 #' @param x path to the module's own `.Rmd`.
 #' @param rebuildCache passed through from [prepManualRmds()]; the value written
 #'   into the chunk's `cache.rebuild` option.
+#' @param stagingPath directory the chapter is written into. The module's own
+#'   directory is never written to; `root.dir` still points at it.
 #'
 #' @return the path of the `<module>2.Rmd` written.
 #'
 #' @keywords internal
 #' @rdname prepOneModuleRmd
-prepOneModuleRmd <- function(x, rebuildCache) {
+prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   modName <- basename(dirname(x))
   message(paste("Copying module", modName, "..."))
-  copyModuleRmd <- sub("(.*)(\\.Rmd)$", "\\12\\2", x)
+  copyModuleRmd <- file.path(stagingPath, paste0(modName, "2.Rmd"))
   if (!file.copy(x, copyModuleRmd, overwrite = TRUE)) {
-    stop("prepManualRmds(): could not copy ", x)
+    stop("prepManualRmds(): could not copy ", x, " to ", stagingPath)
   }
 
   lines <- readLines(copyModuleRmd, warn = FALSE)
@@ -214,7 +216,7 @@ prepOneModuleRmd <- function(x, rebuildCache) {
   }
   if (length(rootDirLine)) {
     code <- sub("(.*root\\.dir.*=[[:space:]]*)(.*)(\\))",
-                paste0("\\1'", normPath(dirname(copyModuleRmd)), "'\\3"),
+                paste0("\\1'", normPath(dirname(x)), "'\\3"),
                 lines[rootDirLine])
     ## the substitution closes on the last ")" of the line it matched, so a call
     ## split over several lines would leave an orphaned ")" behind
@@ -227,7 +229,7 @@ prepOneModuleRmd <- function(x, rebuildCache) {
   } else {
     lines <- append(lines,
                     paste0("knitr::opts_knit$set(root.dir = '",
-                           normPath(dirname(copyModuleRmd)), "')"),
+                           normPath(dirname(x)), "')"),
                     after = at)
   }
 
@@ -285,13 +287,35 @@ prepOneModuleRmd <- function(x, rebuildCache) {
 #'
 #' @param ignoreModules character vector of modules to ignore.
 #'
+#' @param bookdownYML path to the book's `_bookdown.yml`, which supplies the
+#'  chapter order used when de-duplicating text references across chapters.
+#'  Read from the working directory by default.
+#'
+#' @param stagingPath directory the generated chapters are written to, relative
+#'  to the book root. Nothing is written into the module directories, which are
+#'  git submodules in every project that uses this package -- a failed build
+#'  used to leave a `<module>2.Rmd` in each one, and each module repository
+#'  carried a `.gitignore` line to hide it. List the chapters from here in
+#'  `_bookdown.yml`, and add this directory to the book's `.gitignore`.
+#'
 #' @return file paths of the modified module `.Rmd` files
 #'
 #' @export
 #' @importFrom Require normPath
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
-prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL) {
+prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL,
+                           bookdownYML = "_bookdown.yml",
+                           stagingPath = "_manual_rmds") {
+  ## checked before anything is written: a missing or unreadable book file used
+  ## to surface only after every <module>2.Rmd had been created, leaving them
+  ## behind for the caller to clean up
+  if (!file.exists(bookdownYML)) {
+    stop("prepManualRmds(): cannot find '", bookdownYML, "'. It is read from the ",
+         "working directory unless `bookdownYML` says otherwise.")
+  }
+  rmdFiles <- unlist(yaml::read_yaml(bookdownYML)[["rmd_files"]], use.names = FALSE)
+
   moduleDirs <- list.dirs(modulePath, recursive = FALSE)
 
   ## whole module names. As a regex alternation over the whole path,
@@ -326,17 +350,24 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
     return(character(0))
   }
 
-  copyModuleRmds <- vapply(moduleRmds, prepOneModuleRmd, rebuildCache = rebuildCache,
-                           FUN.VALUE = character(1))
-
-  ## chapter order comes from _bookdown.yml, read from the working directory
-  bkdwnYML <- readLines("_bookdown.yml", warn = FALSE)
-  grepStr <- paste0("^", gsub(".", "\\.", gsub("/", "\\/", modulePath, fixed = TRUE), fixed = TRUE))
-  if (!grepl("\\/$", grepStr)) {
-    grepStr <- paste0(grepStr, "\\/")
+  ## chapters from a previous run are cleared, so a module removed from the
+  ## project does not linger as an orphan chapter
+  dir.create(stagingPath, recursive = TRUE, showWarnings = FALSE)
+  stale <- list.files(stagingPath, pattern = "2[.]Rmd$", full.names = TRUE)
+  if (length(stale)) {
+    file.remove(stale)
   }
-  bkdwnYMLsub <- sub("  - ", "", bkdwnYML, fixed = TRUE)
-  bkdwnYMLsub <- normPath(bkdwnYMLsub[grepl(grepStr, bkdwnYMLsub)])
+
+  copyModuleRmds <- vapply(moduleRmds, prepOneModuleRmd, rebuildCache = rebuildCache,
+                           stagingPath = stagingPath, FUN.VALUE = character(1))
+
+  ## chapter order, for the chapters this call generated -- i.e. those the book
+  ## lists from the staging directory. Parsed rather than pattern-matched:
+  ## sub("  - ", ...) assumed exactly two spaces of indent, could not see the
+  ## flow-style `rmd_files: [a, b]` form, and treated a commented-out line as a
+  ## listed chapter.
+  staged <- startsWith(rmdFiles, paste0(sub("/+$", "", stagingPath), "/"))
+  bkdwnYMLsub <- normPath(rmdFiles[staged])
 
   allModules <- lapply(copyModuleRmds, readLines, warn = FALSE)
   names(allModules) <- normPath(copyModuleRmds)
@@ -352,6 +383,16 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
             paste(basename(listedNotPrepped), collapse = ", "), call. = FALSE)
   }
   allModules <- allModules[intersect(bkdwnYMLsub, names(allModules))]
+
+  ## nothing to de-duplicate against. The chapters are written and usable, so
+  ## this is a warning, not an error -- it used to reach the table below and die
+  ## with "object 'lineText' not found". See PredictiveEcology/SpaDES.docs#1.
+  if (!length(allModules)) {
+    warning("prepManualRmds(): '", bookdownYML, "' lists no chapters under '",
+            stagingPath, "', so text references were not de-duplicated. ",
+            "The chapters were still written.", call. = FALSE)
+    return(copyModuleRmds)
+  }
 
   refTextLinesID <- lapply(allModules, function(x) {
     ids <- textRefDefs(x)

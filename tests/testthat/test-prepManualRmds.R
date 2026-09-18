@@ -185,15 +185,31 @@ test_that("rebuildCache reaches the generated chapter", {
 
 ## ---- contract and blast radius ---------------------------------------------
 
-test_that("prepManualRmds() writes only <module>2.Rmd into the module directory", {
+test_that("prepManualRmds() writes nothing into the module directory", {
   localBook("modQ")
   writeModule("modQ", "modules", body = "Body.")
   before <- list.files(file.path("modules", "modQ"), all.files = TRUE, no.. = TRUE)
 
-  prepManualRmds("modules")
+  out <- prepManualRmds("modules")
   after <- list.files(file.path("modules", "modQ"), all.files = TRUE, no.. = TRUE)
 
-  expect_setequal(setdiff(after, before), "modQ2.Rmd")
+  ## the module directories are git submodules in every project that uses this
+  ## package; a build that touches them shows up as a dirty submodule
+  expect_setequal(after, before)
+  expect_setequal(basename(out), "modQ2.Rmd")
+  expect_true(all(startsWith(normalizePath(out), normalizePath("_manual_rmds"))))
+})
+
+test_that("prepManualRmds() clears chapters left by a previous run", {
+  localBook("modQ2")
+  writeModule("modQ2", "modules", body = "Body.")
+  dir.create("_manual_rmds", showWarnings = FALSE)
+  writeLines("stale", file.path("_manual_rmds", "goneModule2.Rmd"))
+
+  prepManualRmds("modules")
+
+  ## a module removed from the project must not linger as an orphan chapter
+  expect_false(file.exists(file.path("_manual_rmds", "goneModule2.Rmd")))
 })
 
 test_that("ignoreModules matches whole module names, not substrings", {
@@ -296,4 +312,52 @@ test_that("prepManualRmds() warns on a directory with no modules in it", {
   ## "object 'lineText' not found". This is the failure reported in #1.
   expect_warning(out <- prepManualRmds("empty"), "no modules to prepare")
   expect_identical(out, character(0))
+})
+
+## ---- _bookdown.yml handling (#1) -------------------------------------------
+
+test_that("prepManualRmds() warns when _bookdown.yml lists no chapters for this modulePath", {
+  localBook("modAC")
+  writeModule("modAC", "modules", body = "Body.")
+  ## the case reported in #1: the module exists, but every module line in
+  ## _bookdown.yml is commented out. Used to die in the de-duplication pass with
+  ## "object 'lineText' not found", after the chapter had already been written.
+  writeLines(c("book_filename: t", "rmd_files:", "  - index.Rmd",
+               "  # - _manual_rmds/modAC2.Rmd"), "_bookdown.yml")
+
+  expect_warning(out <- prepManualRmds("modules"), "lists no chapters")
+  expect_setequal(basename(out), "modAC2.Rmd")
+  expect_true(file.exists(out))
+})
+
+test_that("prepManualRmds() reads _bookdown.yml as YAML, not by indentation", {
+  localBook("modAD")
+  writeModule("modAD", "modules", body = c("(ref:k) shared", "", "Body."))
+  ## four-space indent: the old sub("  - ", ...) matched exactly two
+  writeLines(c("book_filename: t", "rmd_files:", "    - index.Rmd",
+               "    - _manual_rmds/modAD2.Rmd"), "_bookdown.yml")
+
+  expect_no_warning(out <- prepManualRmds("modules"))
+  expect_setequal(basename(out), "modAD2.Rmd")
+})
+
+test_that("prepManualRmds() reads the flow-style rmd_files form", {
+  localBook("modAE")
+  writeModule("modAE", "modules", body = "Body.")
+  writeLines(c("book_filename: t",
+               'rmd_files: ["index.Rmd", "_manual_rmds/modAE2.Rmd"]'), "_bookdown.yml")
+
+  expect_no_warning(out <- prepManualRmds("modules"))
+  expect_setequal(basename(out), "modAE2.Rmd")
+})
+
+test_that("prepManualRmds() checks for _bookdown.yml before writing anything", {
+  localBook("modAF")
+  writeModule("modAF", "modules", body = "Body.")
+  file.remove("_bookdown.yml")
+
+  ## must fail before the write loop, or a failed run leaves <module>2.Rmd
+  ## behind in the module directory
+  expect_error(prepManualRmds("modules"), "_bookdown.yml")
+  expect_false(dir.exists("_manual_rmds"))
 })

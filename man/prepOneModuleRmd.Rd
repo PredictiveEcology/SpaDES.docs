@@ -4,20 +4,23 @@
 \alias{prepOneModuleRmd}
 \title{Turn one module's \code{.Rmd} into a book chapter}
 \usage{
-prepOneModuleRmd(x, rebuildCache)
+prepOneModuleRmd(x, rebuildCache, stagingPath)
 }
 \arguments{
 \item{x}{path to the module's own \code{.Rmd}.}
 
 \item{rebuildCache}{passed through from \code{\link[=prepManualRmds]{prepManualRmds()}}; the value written
 into the chunk's \code{cache.rebuild} option.}
+
+\item{stagingPath}{directory the chapter is written into. The module's own
+directory is never written to; \code{root.dir} still points at it.}
 }
 \value{
 the path of the \verb{<module>2.Rmd} written.
 }
 \description{
-Copies \verb{<module>/<module>.Rmd} to \verb{<module>/<module>2.Rmd} and rewrites the
-copy in place. The module's own file is never modified. The steps, in order,
+Copies \verb{<module>/<module>.Rmd} to \verb{<stagingPath>/<module>2.Rmd} and rewrites
+the copy. Nothing is written into the module's own directory. The steps, in order,
 because several depend on the one before:
 }
 \details{
