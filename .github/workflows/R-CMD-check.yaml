@@ -19,5 +19,12 @@ jobs:
     with:
       # The shared base already covers 5 of the 6 legs this package ran before the
       # migration, and adds windows devel/oldrel-1 plus an ubuntu nosuggests leg.
-      # ubuntu oldrel-2 is the only one it does not, so it is the only extra.
-      extra-config: '[{"config":{"os":"ubuntu-latest","nosuggests":false,"r":"oldrel-2"}}]'
+      # Two extras:
+      #   oldrel-2 -- the only pre-migration leg the base does not carry.
+      #   oldrel-3 -- currently R 4.3, the floor `Depends: R (>= 4.3)` declares,
+      #     which nothing tested before. Rolling rather than pinned, per the org
+      #     policy of keeping oldrel-N so version bumps need no per-package
+      #     maintenance (SpaDES.core#417, SpaDES.project#136). It follows R
+      #     rather than the floor, so when R 4.7 ships this becomes 4.4 and the
+      #     declared floor wants revisiting then.
+      extra-config: '[{"config":{"os":"ubuntu-latest","nosuggests":false,"r":"oldrel-2"}},{"config":{"os":"ubuntu-latest","nosuggests":false,"r":"oldrel-3"}}]'
