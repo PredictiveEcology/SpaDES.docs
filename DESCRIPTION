@@ -20,14 +20,15 @@ Imports:
     data.table,
     knitr,
     kableExtra,
-    modelr,
     pander,
     Require,
     stringi,
     utils
 Suggests:
     rmarkdown,
-    roxygen2
+    roxygen2,
+    testthat (>= 3.0.0),
+    withr
 Remotes:
     PredictiveEcology/Require
 Encoding: UTF-8
@@ -35,5 +36,6 @@ Language: en-CA
 License: GPL (>= 3)
 VignetteBuilder: knitr, rmarkdown
 BugReports: https://github.com/PredictiveEcology/SpaDES.docs/issues
+Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
