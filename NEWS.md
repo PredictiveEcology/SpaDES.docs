@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.2.0
 
 * new vignette, *Building a project manual*: the layout a manual uses, a runnable
   minimal example, what `prepManualRmds()` does to each module `.Rmd` and why,
