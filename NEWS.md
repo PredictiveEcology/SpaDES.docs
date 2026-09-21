@@ -1,5 +1,12 @@
 # SpaDES.docs 0.4.0.9000
 
+* `publishManualArchive()`, `archiveManualPDF()` and `stagePagesFiles()` now
+  report what they did, rather than succeeding silently. A build log should be
+  evidence that the deploy got what it needed: which files reached the published
+  directory, how many archived PDFs were published and which is newest, and
+  whether a `CNAME` was written -- a deploy that quietly lost its custom domain
+  looks exactly like one that kept it, until the domain stops resolving.
+
 # SpaDES.docs 0.4.0
 
 * `publishManualArchive()` copies a manual's archived release PDFs into the
