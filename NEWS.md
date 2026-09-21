@@ -1,5 +1,15 @@
 # SpaDES.docs 0.3.0.9000
 
+* `publishManualArchive()` copies a manual's archived release PDFs into the
+  rendered book directory and writes an index page listing them, newest first.
+  The index is built from the files present rather than a list kept by hand.
+  The archived PDFs belong in version control: the published branch is rebuilt
+  by every deploy, and an old PDF cannot be regenerated from current sources.
+* the *Building a continuously updated manual* vignette gains a section on
+  releases -- archiving each release's PDF, publishing the archive with the
+  site, and committing the new PDF from the workflow so a release does not
+  depend on a manual step.
+
 # SpaDES.docs 0.3.0
 
 * `prepManualRmds()` warns when it prepares a chapter that `_bookdown.yml` does
