@@ -1,4 +1,4 @@
-# SpaDES.docs 0.3.0.9000
+# SpaDES.docs 0.4.0
 
 * `publishManualArchive()` copies a manual's archived release PDFs into the
   rendered book directory and writes an index page listing them, newest first.
