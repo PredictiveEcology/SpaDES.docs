@@ -1,3 +1,5 @@
+# SpaDES.docs 0.4.0.9000
+
 # SpaDES.docs 0.4.0
 
 * `publishManualArchive()` copies a manual's archived release PDFs into the
