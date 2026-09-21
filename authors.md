@@ -16,16 +16,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.3.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/PredictiveEcology/SpaDES.docs/blob/main/DESCRIPTION)
 
 Chubaty A, Barros C, McIntire E (2026). *SpaDES.docs: Helper Utilities
 for Creating SpaDES Module Documentation and Manuals*. R package version
-0.3.0, <https://predictiveecology.github.io/SpaDES.docs/>.
+0.4.0, <https://predictiveecology.github.io/SpaDES.docs/>.
 
     @Manual{,
       title = {SpaDES.docs: Helper Utilities for Creating SpaDES Module Documentation and Manuals},
       author = {Alex M Chubaty and Ceres Barros and Eliot J B McIntire},
       year = {2026},
-      note = {R package version 0.3.0},
+      note = {R package version 0.4.0},
       url = {https://predictiveecology.github.io/SpaDES.docs/},
     }

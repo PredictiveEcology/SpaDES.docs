@@ -28,6 +28,9 @@
 - [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
   : Prepare module .Rmd to render book
 
+- [`publishManualArchive()`](https://predictiveecology.github.io/SpaDES.docs/reference/publishManualArchive.md)
+  : Publish a manual's archived releases alongside the site
+
 - [`stagePagesFiles()`](https://predictiveecology.github.io/SpaDES.docs/reference/stagePagesFiles.md)
   : Stage the files GitHub Pages needs, inside the published directory
 

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
       <h1>Building a continuously updated manual</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.3.0/vignettes/building-a-continuously-updated-manual.Rmd" class="external-link"><code>vignettes/building-a-continuously-updated-manual.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/vignettes/building-a-continuously-updated-manual.Rmd" class="external-link"><code>vignettes/building-a-continuously-updated-manual.Rmd</code></a></small>
       <div class="d-none name"><code>building-a-continuously-updated-manual.Rmd</code></div>
     </div>
 
@@ -213,6 +213,79 @@ within a day of the modules without anyone touching this repository.</p>
 manual, needs a token with write access distributed to every module
 repository, and it rebuilds a whole book because one typo was fixed. The
 cost is not worth the freshness.</p>
+</div>
+<div class="section level2">
+<h2 id="releases-and-keeping-the-old-pdfs">Releases, and keeping the old PDFs<a class="anchor" aria-label="anchor" href="#releases-and-keeping-the-old-pdfs"></a>
+</h2>
+<p>A manual that tracks <code>development</code> is never “a version” of
+anything. A release is the other build: pinned refs, a version number,
+and a PDF that stays available after the site has moved on.</p>
+<p>Keep the released PDFs in version control, under
+<code>archive/pdf/</code>, and publish them with the site rather than
+leaving them on the published branch. That branch is rebuilt by every
+deploy, and an old PDF cannot be regenerated from current sources – so
+it is the one artifact that must not live only there.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/manualPaths.html">manualPaths</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## after render_book(), and only when a PDF was produced</span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/archiveManualPDF.html">archiveManualPDF</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">docs</span>, <span class="st">"MyManual.pdf"</span><span class="op">)</span>,</span>
+<span>  version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/dcf.html" class="external-link">read.dcf</a></span><span class="op">(</span><span class="st">"DESCRIPTION"</span>, fields <span class="op">=</span> <span class="st">"Version"</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>  prefix <span class="op">=</span> <span class="st">"my-manual"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## publish every archived release with the site, and index them</span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/publishManualArchive.html">publishManualArchive</a></span><span class="op">(</span></span>
+<span>  archiveDir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">prj</span>, <span class="st">"archive"</span>, <span class="st">"pdf"</span><span class="op">)</span>,</span>
+<span>  docsDir <span class="op">=</span> <span class="va">paths</span><span class="op">$</span><span class="va">docs</span>,</span>
+<span>  manualName <span class="op">=</span> <span class="st">"My Manual"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Take the version from <code>DESCRIPTION</code> rather than setting it
+in the build script. Two places to edit is one place to forget, and
+<code><a href="../reference/archiveManualPDF.html">archiveManualPDF()</a></code> refuses an empty version rather than
+writing <code>my-manual-v.pdf</code> over the previous release.</p>
+<p>Link the archive from the book’s preface with a
+<strong>static</strong> link to <code>archive/</code>. The page behind
+it is regenerated every build from the files actually present, so
+nothing has to be edited when a release is cut.</p>
+<div class="section level3">
+<h3 id="committing-the-new-pdf">Committing the new PDF<a class="anchor" aria-label="anchor" href="#committing-the-new-pdf"></a>
+</h3>
+<p>Have the workflow do it, so a release does not depend on someone
+remembering:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Archive the release PDF</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="at">        </span><span class="fu">if</span><span class="kw">:</span><span class="at"> github.event_name != 'pull_request'</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="at">          </span><span class="fu">GH_TOKEN</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">        run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>          set -euo pipefail</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>          if [ -z "$(git status --porcelain archive/pdf)" ]; then</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>            echo "No newly archived PDF; nothing to commit."</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>            exit 0</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>          fi</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>          git config --local user.name "github-actions[bot]"</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>          git add archive/pdf</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>          git commit -m "Archive the manual PDF"</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>            "HEAD:${GITHUB_REF_NAME}"</span></code></pre></div>
+<p>This is self-gating: <code><a href="../reference/archiveManualPDF.html">archiveManualPDF()</a></code> writes a file
+only when a PDF was rendered and that version is not already archived,
+so the step is a no-op on ordinary builds and needs no separate release
+trigger.</p>
+</div>
+<div class="section level3">
+<h3 id="do-not-use-clean-exclude-for-this">Do not use <code>clean-exclude</code> for this<a class="anchor" aria-label="anchor" href="#do-not-use-clean-exclude-for-this"></a>
+</h3>
+<p>Keeping the archive only on the published branch, preserved with the
+deploy action’s <code>clean-exclude</code>, looks simpler and is worse.
+It reintroduces files that linger on that branch without any build
+producing them – which is how a stale PDF from a previous era ends up
+published beside a current one. Deploying with <code>clean: true</code>,
+from a directory the build fully populates, keeps the branch an exact
+image of what was built.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="adding-a-module">Adding a module<a class="anchor" aria-label="anchor" href="#adding-a-module"></a>
