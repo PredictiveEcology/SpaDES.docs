@@ -1,5 +1,15 @@
 # SpaDES.docs (development version)
 
+* `stageFigure()` puts a figure next to the rendered document and returns its
+  relative path, so a module chapter references the same path whether it renders
+  on its own or staged into a manual. It replaces `normPath()` in a figure or
+  badge chunk, which produces a path that is correct only on the machine that
+  built the book: the published LandR manual currently serves
+  `src="/home/runner/work/.../figures/..."` from every module chapter, a dead
+  link for every reader, with the build green throughout. A figure fetched at
+  render time is handled the same way -- write it into the module's `figures/`
+  as usual, then pass it through.
+
 * `prepManualRmds()` copies the images a module chapter references in beside the
   staged chapter, and rewrites the references to match. A staged chapter is read
   from the book root, so a relative image path in prose was resolved against the
