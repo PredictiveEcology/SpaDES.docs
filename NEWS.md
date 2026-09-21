@@ -1,4 +1,4 @@
-# SpaDES.docs 0.4.0.9000
+# SpaDES.docs (development version)
 
 * `publishManualArchive()`, `archiveManualPDF()` and `stagePagesFiles()` now
   report what they did, rather than succeeding silently. A build log should be
