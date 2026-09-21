@@ -71,3 +71,78 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
   file.copy(from = pdf, to = dest, overwrite = TRUE)
   invisible(dest)
 }
+
+#' Publish a manual's archived releases alongside the site
+#'
+#' A manual that is released keeps a PDF of each release. Those PDFs belong in
+#' version control rather than only on the published branch: that branch is
+#' rebuilt by every deploy, and an old PDF cannot be regenerated from current
+#' sources. This copies them into the rendered book directory so they deploy with
+#' the site, and writes an index page listing them.
+#'
+#' @details
+#' The index is built from the files actually present, not from a list kept by
+#' hand, so it cannot drift. Versions are read from the file names, which are
+#' what [archiveManualPDF()] writes: `<prefix>-v<version>.pdf`. Anything not
+#' matching that shape is copied but left out of the ordering.
+#'
+#' @param archiveDir directory holding the archived PDFs, usually tracked in the
+#'  repository.
+#'
+#' @param docsDir the rendered book directory, i.e. `_bookdown.yml`'s
+#'  `output_dir`.
+#'
+#' @param manualName name of the manual, used in the index page's headings and
+#'  link text.
+#'
+#' @param subdir directory within `docsDir` to publish into.
+#'
+#' @return path to the index page, invisibly, or `NULL` if there was nothing to
+#'  publish.
+#'
+#' @export
+#' @importFrom Require checkPath
+publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
+                                 docsDir, manualName, subdir = "archive") {
+  if (!dir.exists(archiveDir)) {
+    message("publishManualArchive(): no archive at '", archiveDir,
+            "', nothing published.")
+    return(invisible(NULL))
+  }
+  pdfs <- list.files(archiveDir, pattern = "[.]pdf$", full.names = TRUE)
+  if (!length(pdfs)) {
+    message("publishManualArchive(): no PDFs in '", archiveDir,
+            "', nothing published.")
+    return(invisible(NULL))
+  }
+
+  outDir <- checkPath(file.path(docsDir, subdir, "pdf"), create = TRUE)
+  file.copy(pdfs, outDir, overwrite = TRUE)
+
+  nms <- basename(pdfs)
+  vers <- sub("^.*-v(.*)[.]pdf$", "\\1", nms)
+  ## newest first; anything that is not a version sorts last rather than erroring
+  ord <- order(numeric_version(vers, strict = FALSE), decreasing = TRUE,
+               na.last = TRUE)
+  nms <- nms[ord]
+  vers <- vers[ord]
+  sizes <- file.size(file.path(outDir, nms)) / 1048576
+
+  index <- file.path(docsDir, subdir, "index.html")
+  writeLines(c(
+    "<!DOCTYPE html>",
+    '<html lang="en"><head><meta charset="utf-8">',
+    paste0("<title>", manualName, " &mdash; archived versions</title>"),
+    "<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem}",
+    "li{margin:.4rem 0}span{color:#666;font-size:.9em}</style>",
+    "</head><body>",
+    paste0("  <h1>", manualName, " &mdash; archived versions</h1>"),
+    paste0('  <p>Released versions of this manual. The current one is <a href="../">here</a>.</p>'),
+    "  <ul>",
+    sprintf('    <li><a href="pdf/%s">%s v%s</a> <span>(PDF, %.1f MB)</span></li>',
+            nms, manualName, vers, sizes),
+    "  </ul>",
+    "</body></html>"
+  ), index)
+  invisible(index)
+}

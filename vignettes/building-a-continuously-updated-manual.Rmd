@@ -167,6 +167,79 @@ Per-push rebuilding, where each module repository notifies the manual, needs a
 token with write access distributed to every module repository, and it rebuilds
 a whole book because one typo was fixed. The cost is not worth the freshness.
 
+## Releases, and keeping the old PDFs
+
+A manual that tracks `development` is never "a version" of anything. A release
+is the other build: pinned refs, a version number, and a PDF that stays
+available after the site has moved on.
+
+Keep the released PDFs in version control, under `archive/pdf/`, and publish
+them with the site rather than leaving them on the published branch. That branch
+is rebuilt by every deploy, and an old PDF cannot be regenerated from current
+sources -- so it is the one artifact that must not live only there.
+
+```{r archive, eval = FALSE}
+paths <- SpaDES.docs::manualPaths()
+
+## after render_book(), and only when a PDF was produced
+SpaDES.docs::archiveManualPDF(
+  file.path(paths$docs, "MyManual.pdf"),
+  version = read.dcf("DESCRIPTION", fields = "Version")[1],
+  prefix = "my-manual"
+)
+
+## publish every archived release with the site, and index them
+SpaDES.docs::publishManualArchive(
+  archiveDir = file.path(paths$prj, "archive", "pdf"),
+  docsDir = paths$docs,
+  manualName = "My Manual"
+)
+```
+
+Take the version from `DESCRIPTION` rather than setting it in the build script.
+Two places to edit is one place to forget, and `archiveManualPDF()` refuses an
+empty version rather than writing `my-manual-v.pdf` over the previous release.
+
+Link the archive from the book's preface with a **static** link to `archive/`.
+The page behind it is regenerated every build from the files actually present,
+so nothing has to be edited when a release is cut.
+
+### Committing the new PDF
+
+Have the workflow do it, so a release does not depend on someone remembering:
+
+```yaml
+      - name: Archive the release PDF
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain archive/pdf)" ]; then
+            echo "No newly archived PDF; nothing to commit."
+            exit 0
+          fi
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add archive/pdf
+          git commit -m "Archive the manual PDF"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:${GITHUB_REF_NAME}"
+```
+
+This is self-gating: `archiveManualPDF()` writes a file only when a PDF was
+rendered and that version is not already archived, so the step is a no-op on
+ordinary builds and needs no separate release trigger.
+
+### Do not use `clean-exclude` for this
+
+Keeping the archive only on the published branch, preserved with the deploy
+action's `clean-exclude`, looks simpler and is worse. It reintroduces files that
+linger on that branch without any build producing them -- which is how a stale
+PDF from a previous era ends up published beside a current one. Deploying with
+`clean: true`, from a directory the build fully populates, keeps the branch an
+exact image of what was built.
+
 ## Adding a module
 
 Three things change together, and two of them fail quietly:
