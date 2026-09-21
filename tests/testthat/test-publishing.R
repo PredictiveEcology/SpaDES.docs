@@ -55,3 +55,49 @@ test_that("archiveManualPDF() refuses an empty version", {
   ## "LandR-manual-v.pdf" over the previous build
   expect_error(archiveManualPDF("docs/Manual.pdf", "", "LandR-manual"), "`version` is empty")
 })
+
+makeArchive <- function(dir, versions, prefix = "Test-manual") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  for (v in versions) writeLines("x", file.path(dir, sprintf("%s-v%s.pdf", prefix, v)))
+}
+
+test_that("publishManualArchive() copies the PDFs and indexes them newest first", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
+  dir.create("docs")
+
+  idx <- publishManualArchive("archive/pdf", "docs", "Test Manual")
+  expect_true(file.exists(idx))
+  expect_setequal(list.files("docs/archive/pdf"),
+                  c("Test-manual-v1.0.0.pdf", "Test-manual-v1.0.10.pdf", "Test-manual-v1.0.2.pdf"))
+
+  html <- paste(readLines(idx), collapse = "\n")
+  ## numeric_version ordering, not string ordering: 1.0.10 is newer than 1.0.2
+  order_seen <- regmatches(html, gregexpr("v[0-9.]+</a>", html))[[1]]
+  expect_identical(order_seen, c("v1.0.10</a>", "v1.0.2</a>", "v1.0.0</a>"))
+})
+
+test_that("publishManualArchive() does nothing when there is no archive", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("docs")
+  expect_message(out <- publishManualArchive("archive/pdf", "docs", "Test Manual"),
+                 "nothing published")
+  expect_null(out)
+})
+
+test_that("publishManualArchive() does nothing when the archive is empty", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("archive/pdf", recursive = TRUE); dir.create("docs")
+  expect_message(out <- publishManualArchive("archive/pdf", "docs", "Test Manual"),
+                 "no PDFs")
+  expect_null(out)
+})
+
+test_that("publishManualArchive() names the manual in the page", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", "2.1.0"); dir.create("docs")
+  idx <- publishManualArchive("archive/pdf", "docs", "LandR Manual")
+  html <- paste(readLines(idx), collapse = "\n")
+  expect_match(html, "LandR Manual &mdash; archived versions")
+  expect_match(html, 'href="pdf/Test-manual-v2.1.0.pdf"')
+})
