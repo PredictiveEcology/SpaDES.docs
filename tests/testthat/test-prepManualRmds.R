@@ -383,3 +383,59 @@ test_that("prepManualRmds() checks for _bookdown.yml before writing anything", {
   expect_error(prepManualRmds("modules"), "_bookdown.yml")
   expect_false(dir.exists("_manual_rmds"))
 })
+
+test_that("prepManualRmds() rewrites relative image paths so they resolve from the book root", {
+  localBook("modImg")
+  writeModule("modImg", "modules",
+              body = c("[![made-with-Markdown](figures/markdownBadge.png)](https://commonmark.org)",
+                       "",
+                       "![A schematic](figures/schematic.png)"))
+  figs <- file.path("modules", "modImg", "figures")
+  dir.create(figs, recursive = TRUE)
+  file.create(file.path(figs, c("markdownBadge.png", "schematic.png")))
+
+  chapter <- readLines(prepManualRmds("modules"))
+  paths <- imagePaths(chapter)
+  expect_length(paths, 2L)
+
+  ## the chapter is staged away from its module, and pandoc resolves a relative
+  ## image path against the BOOK ROOT -- where the module's figures are not.
+  ## `root.dir` cannot help: it sets the working directory chunks EVALUATE in,
+  ## not how a literal markdown image in prose is resolved.
+  expect_true(all(file.exists(paths)))
+
+  ## relative, not absolute: an absolute path bakes the build machine into the
+  ## generated .tex, and stops the book being reproducible anywhere else
+  expect_false(any(startsWith(paths, "/")))
+
+  ## ... and the module still renders STANDALONE. That works only because the
+  ## rewrite lands in the staged copy alone: the module's own .Rmd keeps the
+  ## path that resolves from its own directory, which is where it is knitted
+  ## from on its own.
+  source <- readLines(file.path("modules", "modImg", "modImg.Rmd"))
+  expect_identical(imagePaths(source),
+                   c("figures/markdownBadge.png", "figures/schematic.png"))
+  withr::with_dir(file.path("modules", "modImg"), {
+    expect_true(all(file.exists(imagePaths(source))))
+  })
+})
+
+test_that("prepManualRmds() leaves image paths it must not rewrite alone", {
+  localBook("modKeep")
+  writeModule("modKeep", "modules",
+              body = c("![remote](https://example.org/badge.png)",
+                       "",
+                       "![absolute](/tmp/already-absolute.png)",
+                       "",
+                       "```{r chunk-modKeep, eval = FALSE}",
+                       'knitr::include_graphics("figures/inside-a-chunk.png")',
+                       "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  expect_length(grep("https://example.org/badge.png", chapter, fixed = TRUE), 1)
+  expect_length(grep("(/tmp/already-absolute.png)", chapter, fixed = TRUE), 1)
+  ## code is the module's own business: rewriting inside a chunk would change
+  ## what the module RUNS, and `root.dir` already points chunks at the module
+  expect_length(grep('include_graphics("figures/inside-a-chunk.png")', chapter, fixed = TRUE), 1)
+})

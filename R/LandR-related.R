@@ -249,6 +249,19 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
                     after = at)
   }
 
+  ## Literal markdown images in prose are resolved by pandoc against the BOOK
+  ## ROOT, where bookdown merges the chapters -- not against the module directory
+  ## the chapter came from. The `root.dir` set above cannot help: it is the
+  ## directory chunks EVALUATE in, and a path written in prose is never evaluated.
+  ##
+  ## The image is copied in beside the staged chapter and the reference rewritten
+  ## to point there. Staying INSIDE the book root is the part that matters: an
+  ## absolute path renders locally and then publishes a dead link, because the
+  ## deployed site has no /home/<user>/ to serve. The module's own .Rmd is left
+  ## alone, so it still renders standalone from its own directory.
+  lines <- stageModuleImages(lines, moduleDir = dirname(x), modName = modName,
+                             stagingPath = stagingPath)
+
   ## the chapter bibliography goes last. A heading line only -- unanchored, this
   ## matched prose, and two matches made a length-2 `if` condition.
   cls <- classifyRmdLines(lines)
@@ -438,4 +451,69 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   }, allModules = allModules)
 
   copyModuleRmds
+}
+
+## Copy the images a chapter references in beside the staged chapter, and rewrite
+## the references to match. Only prose is considered: rewriting inside a chunk
+## would change what the module RUNS, and a chunk already evaluates with
+## `root.dir` pointing at the module.
+stageModuleImages <- function(lines, moduleDir, modName, stagingPath) {
+  stagingPath <- sub("/+$", "", stagingPath)
+  dest <- file.path(stagingPath, modName)
+  ## a previous run's copies must not linger: an image dropped from the module
+  ## would otherwise keep rendering from the stale copy
+  unlink(dest, recursive = TRUE)
+
+  cls <- classifyRmdLines(lines)
+  idx <- which(cls == "prose" & grepl("![", lines, fixed = TRUE))
+  missing <- character(0)
+  for (i in idx) {
+    at <- gregexpr("!\\[[^]]*\\]\\([^)]+\\)", lines[i])
+    found <- regmatches(lines[i], at)[[1]]
+    if (!length(found)) {
+      next
+    }
+    done <- lapply(found, stageOneImage, moduleDir = moduleDir, dest = dest)
+    missing <- c(missing, unlist(lapply(done, attr, "missing")))
+    regmatches(lines[i], at) <- list(vapply(done, as.character, character(1)))
+  }
+
+  ## quiet is the wrong default here: the chapter renders, the book goes green,
+  ## and the image is simply absent from the published page
+  if (length(missing)) {
+    message("prepManualRmds(): ", modName, " references ", length(missing),
+            " image(s) that are not in the module, so they were left as-is: ",
+            paste(unique(missing), collapse = ", "))
+  }
+  lines
+}
+
+## One `![alt](target)`. Returns the replacement, carrying a "missing" attribute
+## when the module does not actually hold the file.
+stageOneImage <- function(img, moduleDir, dest) {
+  head <- sub("^(!\\[[^]]*\\]\\().*\\)$", "\\1", img)
+  target <- sub("^!\\[[^]]*\\]\\((.*)\\)$", "\\1", img)
+  ## an optional title travels with the target: ![alt](path "title")
+  path <- sub("[[:space:]]+[\"'].*$", "", target)
+  rest <- substring(target, nchar(path) + 1L)
+
+  ## a URL, an absolute path, a fragment or an angle-bracketed target has no
+  ## module-relative meaning to re-base
+  if (!nzchar(path) || grepl("^([[:alpha:]][[:alnum:]+.-]*:|//|/|#|<)", path)) {
+    return(img)
+  }
+
+  src <- file.path(moduleDir, path)
+  if (!file.exists(src)) {
+    ## e.g. downloaded by a setup chunk at render time; there is nothing to copy,
+    ## and guessing a destination would only move the broken link
+    return(structure(img, missing = path))
+  }
+
+  to <- file.path(dest, path)
+  dir.create(dirname(to), recursive = TRUE, showWarnings = FALSE)
+  if (!file.copy(src, to, overwrite = TRUE)) {
+    stop("prepManualRmds(): could not copy ", src, " to ", to)
+  }
+  paste0(head, to, rest, ")")
 }

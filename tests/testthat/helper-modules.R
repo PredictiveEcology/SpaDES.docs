@@ -35,3 +35,10 @@ localBook <- function(modules, modulePath = "modules", envir = parent.frame()) {
   )
   invisible(d)
 }
+
+## The image targets a staged chapter actually carries, so a test asserts on what
+## pandoc would resolve rather than on the rewrite's own regex.
+imagePaths <- function(lines) {
+  m <- regmatches(lines, gregexpr("!\\[[^]]*\\]\\([^)]+\\)", lines))
+  sub("^!\\[[^]]*\\]\\(([^)]+)\\)$", "\\1", unlist(m, use.names = FALSE))
+}

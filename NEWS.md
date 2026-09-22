@@ -1,5 +1,27 @@
 # SpaDES.docs (development version)
 
+* `stageFigure()` puts a figure next to the rendered document and returns its
+  relative path, so a module chapter references the same path whether it renders
+  on its own or staged into a manual. It replaces `normPath()` in a figure or
+  badge chunk, which produces a path that is correct only on the machine that
+  built the book: the published LandR manual currently serves
+  `src="/home/runner/work/.../figures/..."` from every module chapter, a dead
+  link for every reader, with the build green throughout. A figure fetched at
+  render time is handled the same way -- write it into the module's `figures/`
+  as usual, then pass it through.
+
+* `prepManualRmds()` copies the images a module chapter references in beside the
+  staged chapter, and rewrites the references to match. A staged chapter is read
+  from the book root, so a relative image path in prose was resolved against the
+  book root instead of the module it came from, and the image was not found;
+  `root.dir` does not help, because it sets the directory chunks *evaluate* in
+  and prose is never evaluated. Writing an absolute path instead is what modules
+  had been doing, and it renders locally and then publishes a dead link -- the
+  deployed site has no `/home/<user>/` to serve from. Only prose is rewritten:
+  inside a chunk the path is code the module runs, and a chunk already evaluates
+  with `root.dir` set to the module. URLs, absolute paths and images the module
+  does not actually hold are left alone, the last of these with a message.
+
 * `publishManualArchive()`, `archiveManualPDF()` and `stagePagesFiles()` now
   report what they did, rather than succeeding silently. A build log should be
   evidence that the deploy got what it needed: which files reached the published
