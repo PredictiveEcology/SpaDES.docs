@@ -101,3 +101,30 @@ test_that("publishManualArchive() names the manual in the page", {
   expect_match(html, "LandR Manual &mdash; archived versions")
   expect_match(html, 'href="pdf/Test-manual-v2.1.0.pdf"')
 })
+
+## Silent success is the failure mode these guard against: a build log should be
+## evidence that the deploy got what it needed, not something to infer.
+
+test_that("stagePagesFiles() reports what it wrote", {
+  d <- withr::local_tempdir(); docs <- file.path(d, "docs"); dir.create(docs)
+  expect_message(stagePagesFiles(docs), "wrote \\.nojekyll")
+  expect_message(stagePagesFiles(docs, cname = "example.org"), "CNAME \\(example\\.org\\)")
+})
+
+test_that("archiveManualPDF() reports what it archived", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("docs"); writeLines("x", "docs/Manual.pdf")
+  expect_message(archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
+                 "archived 'LandR-manual-v1\\.0\\.4\\.pdf'")
+})
+
+test_that("publishManualArchive() reports how many it published", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
+  dir.create("docs")
+  expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"),
+                 "published 3 archived PDF")
+  ## and names the newest, so a stale archive is visible in the log
+  expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"),
+                 "newest v1\\.0\\.10")
+})

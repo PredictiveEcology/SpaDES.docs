@@ -35,3 +35,19 @@ localBook <- function(modules, modulePath = "modules", envir = parent.frame()) {
   )
   invisible(d)
 }
+
+## The image targets a staged chapter actually carries, so a test asserts on what
+## pandoc would resolve rather than on the rewrite's own regex.
+imagePaths <- function(lines) {
+  m <- regmatches(lines, gregexpr("!\\[[^]]*\\]\\([^)]+\\)", lines))
+  sub("^!\\[[^]]*\\]\\(([^)]+)\\)$", "\\1", unlist(m, use.names = FALSE))
+}
+
+## knitr keeps its settings in a closure rather than in options(), so withr cannot
+## scope them; this does it by hand for the calling test.
+localOptsKnit <- function(..., .local_envir = parent.frame()) {
+  new <- list(...)
+  old <- knitr::opts_knit$get(names(new), drop = FALSE)
+  knitr::opts_knit$set(new)
+  withr::defer(knitr::opts_knit$set(old), envir = .local_envir)
+}

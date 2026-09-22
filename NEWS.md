@@ -1,3 +1,53 @@
+# SpaDES.docs 0.5.0
+
+* `stageFigure()` gives a figure or badge chunk a path that works both when the
+  module renders on its own and when its chapter is staged into a manual. It
+  replaces `normPath()`, which produces a path correct only on the machine that
+  built the book: the published LandR manual currently serves
+  `src="/home/runner/work/.../figures/..."` from every module chapter, a dead
+  link for every reader, with the build green throughout. Standalone, the path
+  comes back unchanged. Staged, the figure is copied into a directory of the
+  module's own beside the chapter -- the one `prepManualRmds()` copies the
+  chapter's prose images into -- and the relative path to that copy is returned,
+  so it is published with the book. Per module because modules reuse file names:
+  every one writes `figures/moduleVersionBadge.png`, and a shared directory
+  showed each chapter the badge of the module knitted last. `prepManualRmds()`
+  marks a staged chapter by setting the knitr option `SpaDES.docs.stageDir` in
+  its setup chunk. Accepts a vector, as `knitr::include_graphics()` does. A
+  figure fetched at render time is handled the same way -- write it into the
+  module's `figures/` as usual, then pass it through.
+
+* `includeFigure()` is the chunk form: it stages a figure and passes it to
+  `knitr::include_graphics()`. `include_graphics(stageFigure(path))` cannot work
+  from a staged chapter, because `include_graphics()` checks the file against the
+  working directory -- the module's -- while the staged path is relative to the
+  book root. `stageFigure()` makes the same check against the right directory,
+  in both modes, so turning knitr's off loses nothing.
+
+* `prepManualRmds()` turns caching off for any chunk that calls `stageFigure()`
+  or `includeFigure()`. knitr serves a cached chunk's output without re-running
+  its code, so the copy was skipped and, from the second build on, the chapter
+  referenced a file that was never staged. Modules commonly cache whole chapters.
+
+* `prepManualRmds()` copies the images a module chapter references in beside the
+  staged chapter, and rewrites the references to match. A staged chapter is read
+  from the book root, so a relative image path in prose was resolved against the
+  book root instead of the module it came from, and the image was not found;
+  `root.dir` does not help, because it sets the directory chunks *evaluate* in
+  and prose is never evaluated. Writing an absolute path instead is what modules
+  had been doing, and it renders locally and then publishes a dead link -- the
+  deployed site has no `/home/<user>/` to serve from. Only prose is rewritten:
+  inside a chunk the path is code the module runs, and a chunk already evaluates
+  with `root.dir` set to the module. URLs, absolute paths and images the module
+  does not actually hold are left alone, the last of these with a message.
+
+* `publishManualArchive()`, `archiveManualPDF()` and `stagePagesFiles()` now
+  report what they did, rather than succeeding silently. A build log should be
+  evidence that the deploy got what it needed: which files reached the published
+  directory, how many archived PDFs were published and which is newest, and
+  whether a `CNAME` was written -- a deploy that quietly lost its custom domain
+  looks exactly like one that kept it, until the domain stops resolving.
+
 # SpaDES.docs 0.4.0
 
 * `publishManualArchive()` copies a manual's archived release PDFs into the

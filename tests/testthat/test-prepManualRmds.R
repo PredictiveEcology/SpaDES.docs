@@ -383,3 +383,125 @@ test_that("prepManualRmds() checks for _bookdown.yml before writing anything", {
   expect_error(prepManualRmds("modules"), "_bookdown.yml")
   expect_false(dir.exists("_manual_rmds"))
 })
+
+test_that("prepManualRmds() rewrites relative image paths so they resolve from the book root", {
+  localBook("modImg")
+  writeModule("modImg", "modules",
+              body = c("[![made-with-Markdown](figures/markdownBadge.png)](https://commonmark.org)",
+                       "",
+                       "![A schematic](figures/schematic.png)"))
+  figs <- file.path("modules", "modImg", "figures")
+  dir.create(figs, recursive = TRUE)
+  file.create(file.path(figs, c("markdownBadge.png", "schematic.png")))
+
+  chapter <- readLines(prepManualRmds("modules"))
+  paths <- imagePaths(chapter)
+  expect_length(paths, 2L)
+
+  ## the chapter is staged away from its module, and pandoc resolves a relative
+  ## image path against the BOOK ROOT -- where the module's figures are not.
+  ## `root.dir` cannot help: it sets the working directory chunks EVALUATE in,
+  ## not how a literal markdown image in prose is resolved.
+  expect_true(all(file.exists(paths)))
+
+  ## relative, not absolute: an absolute path bakes the build machine into the
+  ## generated .tex, and stops the book being reproducible anywhere else
+  expect_false(any(startsWith(paths, "/")))
+
+  ## ... and the module still renders STANDALONE. That works only because the
+  ## rewrite lands in the staged copy alone: the module's own .Rmd keeps the
+  ## path that resolves from its own directory, which is where it is knitted
+  ## from on its own.
+  source <- readLines(file.path("modules", "modImg", "modImg.Rmd"))
+  expect_identical(imagePaths(source),
+                   c("figures/markdownBadge.png", "figures/schematic.png"))
+  withr::with_dir(file.path("modules", "modImg"), {
+    expect_true(all(file.exists(imagePaths(source))))
+  })
+})
+
+test_that("prepManualRmds() leaves image paths it must not rewrite alone", {
+  localBook("modKeep")
+  writeModule("modKeep", "modules",
+              body = c("![remote](https://example.org/badge.png)",
+                       "",
+                       "![absolute](/tmp/already-absolute.png)",
+                       "",
+                       "```{r chunk-modKeep, eval = FALSE}",
+                       'knitr::include_graphics("figures/inside-a-chunk.png")',
+                       "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  expect_length(grep("https://example.org/badge.png", chapter, fixed = TRUE), 1)
+  expect_length(grep("(/tmp/already-absolute.png)", chapter, fixed = TRUE), 1)
+  ## code is the module's own business: rewriting inside a chunk would change
+  ## what the module RUNS, and `root.dir` already points chunks at the module
+  expect_length(grep('include_graphics("figures/inside-a-chunk.png")', chapter, fixed = TRUE), 1)
+})
+
+test_that("prepManualRmds() tells stageFigure() where the chapter's figures go", {
+  localBook("modStage")
+  writeModule("modStage", "modules", body = "Body.")
+
+  chapter <- readLines(prepManualRmds("modules"))
+  setup <- grep("^```\\{r setup-modStage", chapter)
+
+  ## per module, beside the staged chapter -- the same directory the prose images
+  ## are copied into -- and set inside the setup chunk, so it is in force for
+  ## every later chunk of this chapter and for no other
+  line <- grep("SpaDES.docs.stageDir", chapter, fixed = TRUE)
+  expect_length(line, 1L)
+  expect_match(chapter[line], "SpaDES.docs.stageDir = '_manual_rmds/modStage'", fixed = TRUE)
+  expect_true(line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1)
+})
+
+test_that("prepManualRmds() turns caching off for chunks that stage figures", {
+  localBook("modCache")
+  writeModule("modCache", "modules", body = c(
+    "```{r fig-staged, fig.cap = 'a figure'}",
+    'SpaDES.docs::includeFigure("figures/x.png")',
+    "```",
+    "",
+    "```{r badge-staged, results = 'asis', cache = TRUE}",
+    'cat(SpaDES.docs::stageFigure("figures/b.png"))',
+    "```",
+    "",
+    "```{r unrelated, cache = TRUE}",
+    "1 + 1",
+    "```",
+    "",
+    "```{r already-off, cache = FALSE}",
+    'SpaDES.docs::includeFigure("figures/y.png")',
+    "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## a chunk served from knitr's cache replays its OUTPUT without re-running its
+  ## CODE, so the copy never happens: the next build references an image that
+  ## was never staged. These chunks are trivial, so there is nothing to lose.
+  expect_match(grep("^```\\{r fig-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_no_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## and nothing else is touched
+  expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## a header that already says so is left exactly as it was, not given a second
+  ## `cache = FALSE`
+  expect_identical(grep("^```\\{r already-off", chapter, value = TRUE),
+                   "```{r already-off, cache = FALSE}")
+})
+
+test_that("prepManualRmds() leaves an image the module does not hold, and says so", {
+  localBook("modMiss")
+  writeModule("modMiss", "modules",
+              body = c("![fetched at render time](figures/not-yet-downloaded.png)",
+                       "",
+                       "A stray ![ that never closes, which must not trip the rewrite."))
+
+  expect_message(chapter <- readLines(prepManualRmds("modules")),
+                 "not in the module, so they were left as-is: figures/not-yet-downloaded.png",
+                 fixed = TRUE)
+  ## guessing a destination would only move the broken link
+  expect_length(grep("](figures/not-yet-downloaded.png)", chapter, fixed = TRUE), 1)
+  expect_length(grep("A stray ![ that never closes", chapter, fixed = TRUE), 1)
+})

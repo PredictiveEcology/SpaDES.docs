@@ -34,6 +34,11 @@ stagePagesFiles <- function(path, cname = NULL) {
     }
     writeLines(cname, file.path(path, "CNAME"))
   }
+  ## say so: a deploy that quietly lost its CNAME looks exactly like one that
+  ## kept it, until the custom domain stops resolving
+  message("stagePagesFiles(): wrote .nojekyll",
+          if (!is.null(cname)) paste0(" and CNAME (", cname, ")") else "",
+          " to '", path, "'.")
   invisible(path)
 }
 
@@ -69,6 +74,7 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
   archiveDir <- checkPath(archiveDir, create = TRUE)
   dest <- file.path(archiveDir, paste0(prefix, "-v", version, ".pdf"))
   file.copy(from = pdf, to = dest, overwrite = TRUE)
+  message("archiveManualPDF(): archived '", basename(dest), "' to '", archiveDir, "'.")
   invisible(dest)
 }
 
@@ -144,5 +150,7 @@ publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
     "  </ul>",
     "</body></html>"
   ), index)
+  message("publishManualArchive(): published ", length(nms), " archived PDF(s) to '",
+          file.path(subdir, "pdf"), "', newest v", vers[1], ".")
   invisible(index)
 }
