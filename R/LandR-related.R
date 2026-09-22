@@ -199,14 +199,7 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
       sub("(.*)\\}", "\\1, eval = TRUE\\}", opts)
     }
   }
-  if (isFALSE(grepl("cache[[:space:]]*=[[:space:]]*FALSE", opts))) {
-    opts <- if (grepl("cache[^.]", opts)) {
-      sub("(.*)(cache[[:space:]]*=[[:space:]]*)([[:alnum:]]+)(.*)\\}", "\\1\\2FALSE\\4\\}", opts)
-    } else {
-      sub("(.*)\\}", "\\1, cache = FALSE\\}", opts)
-    }
-  }
-  lines[at] <- opts
+  lines[at] <- uncacheChunk(opts)
 
   ## root.dir, within the setup chunk only
   inSetup <- chunkLines(lines, at)
@@ -243,6 +236,18 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
                   paste0("knitr::opts_knit$set(SpaDES.docs.stageDir = '",
                          moduleStageDir(stagingPath, modName), "')"),
                   after = at)
+
+  ## A chunk that stages a figure has to run on every build: knitr serves a cached
+  ## chunk's OUTPUT without re-running its CODE, so the copy would be skipped and
+  ## the chapter would reference a file that was never staged -- on the second
+  ## build, since the first one fills the cache. Modules commonly set cache = TRUE
+  ## for the whole chapter. These chunks only name a file, so nothing is lost.
+  cls <- classifyRmdLines(lines)
+  for (h in which(cls == "chunkHeader")) {
+    if (any(grepl("\\b(stageFigure|includeFigure)\\(", lines[chunkLines(lines, h, cls)]))) {
+      lines[h] <- uncacheChunk(lines[h])
+    }
+  }
 
   ## cache.rebuild, likewise within the setup chunk. A settable occurrence, not
   ## the word appearing anywhere: a module mentioning it only in a comment must
@@ -533,4 +538,16 @@ stageOneImage <- function(img, moduleDir, dest) {
 ## stageFigure() copies, so a module's figures all end up in one place.
 moduleStageDir <- function(stagingPath, modName) {
   file.path(sub("/+$", "", stagingPath), modName)
+}
+
+## Force `cache = FALSE` in a chunk header, whatever it said before.
+uncacheChunk <- function(header) {
+  if (grepl("cache[[:space:]]*=[[:space:]]*FALSE", header)) {
+    return(header)
+  }
+  if (grepl("cache[^.]", header)) {
+    sub("(.*)(cache[[:space:]]*=[[:space:]]*)([[:alnum:]]+)(.*)\\}", "\\1\\2FALSE\\4\\}", header)
+  } else {
+    sub("(.*)\\}", "\\1, cache = FALSE\\}", header)
+  }
 }

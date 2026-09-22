@@ -455,3 +455,30 @@ test_that("prepManualRmds() tells stageFigure() where the chapter's figures go",
   expect_match(chapter[line], "SpaDES.docs.stageDir = '_manual_rmds/modStage'", fixed = TRUE)
   expect_true(line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1)
 })
+
+test_that("prepManualRmds() turns caching off for chunks that stage figures", {
+  localBook("modCache")
+  writeModule("modCache", "modules", body = c(
+    "```{r fig-staged, fig.cap = 'a figure'}",
+    'SpaDES.docs::includeFigure("figures/x.png")',
+    "```",
+    "",
+    "```{r badge-staged, results = 'asis', cache = TRUE}",
+    'cat(SpaDES.docs::stageFigure("figures/b.png"))',
+    "```",
+    "",
+    "```{r unrelated, cache = TRUE}",
+    "1 + 1",
+    "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## a chunk served from knitr's cache replays its OUTPUT without re-running its
+  ## CODE, so the copy never happens: the next build references an image that
+  ## was never staged. These chunks are trivial, so there is nothing to lose.
+  expect_match(grep("^```\\{r fig-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_no_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## and nothing else is touched
+  expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+})

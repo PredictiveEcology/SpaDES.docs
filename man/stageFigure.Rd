@@ -57,7 +57,12 @@ module's own \verb{figures/} first, as usual, then pass it through.
 }
 \examples{
 \dontrun{
-## in a module chapter, instead of normPath():
-knitr::include_graphics(stageFigure("figures/schematic.png"))
+## a linked badge, in an `results = "asis"` chunk, instead of normPath():
+cat(paste0("[![module-version](", stageFigure("figures/moduleVersionBadge.png"),
+           ")](https://github.com/PredictiveEcology/Biomass_core)"))
 }
+}
+\seealso{
+\code{\link[=includeFigure]{includeFigure()}} for a figure chunk: \code{include_graphics(stageFigure())}
+does not work from a staged chapter.
 }

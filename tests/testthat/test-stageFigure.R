@@ -91,3 +91,39 @@ test_that("stageFigure() says so when a staged figure is not there", {
   expect_error(withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
                "no figure at")
 })
+
+test_that("stageFigure() checks the figure exists when rendering on its own too", {
+  localStagedBook("modA")
+  localOptsKnit(SpaDES.docs.stageDir = NULL)
+
+  ## the same check in both modes, so a caller that turns knitr's own check off
+  ## (as includeFigure() must) loses nothing
+  expect_error(withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
+               "no figure at")
+})
+
+test_that("includeFigure() works from a staged chapter, where include_graphics(stageFigure()) cannot", {
+  d <- localStagedBook("modA")
+  writeLines("schematic", "modules/modA/figures/schematic.png")
+  localOptsKnit(output.dir = file.path(d, "manual"),
+                SpaDES.docs.stageDir = "_manual_rmds/modA")
+
+  ## include_graphics() checks file.exists() against the WORKING directory -- the
+  ## module, via root.dir -- but the staged path is relative to the BOOK ROOT
+  out <- withr::with_dir("modules/modA", includeFigure("figures/schematic.png"))
+
+  expect_s3_class(out, "knit_image_paths")
+  expect_identical(as.character(out), "_manual_rmds/modA/figures/schematic.png")
+  expect_true(file.exists(file.path("manual", out)))
+})
+
+test_that("includeFigure() is include_graphics() when the module renders on its own", {
+  localStagedBook("modA")
+  writeLines("schematic", "modules/modA/figures/schematic.png")
+  localOptsKnit(SpaDES.docs.stageDir = NULL)
+
+  out <- withr::with_dir("modules/modA", includeFigure("figures/schematic.png"))
+
+  expect_s3_class(out, "knit_image_paths")
+  expect_identical(as.character(out), "figures/schematic.png")
+})

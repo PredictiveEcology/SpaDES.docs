@@ -45,14 +45,27 @@
 #' @export
 #' @importFrom Require checkPath
 #'
+#' @seealso [includeFigure()] for a figure chunk: `include_graphics(stageFigure())`
+#'  does not work from a staged chapter.
+#'
 #' @examples
 #' \dontrun{
-#' ## in a module chapter, instead of normPath():
-#' knitr::include_graphics(stageFigure("figures/schematic.png"))
+#' ## a linked badge, in an `results = "asis"` chunk, instead of normPath():
+#' cat(paste0("[![module-version](", stageFigure("figures/moduleVersionBadge.png"),
+#'            ")](https://github.com/PredictiveEcology/Biomass_core)"))
 #' }
 stageFigure <- function(path,
                         stageDir = knitr::opts_knit$get("SpaDES.docs.stageDir"),
                         outputDir = knitr::opts_knit$get("output.dir")) {
+  ## checked in both modes, so a caller that turns knitr's own check off -- as
+  ## includeFigure() has to -- loses nothing by it
+  missing <- path[!file.exists(path)]
+  if (length(missing)) {
+    stop("stageFigure(): no figure at ", paste0("'", missing, "'", collapse = ", "),
+         ", relative to '", getwd(), "'. A figure fetched at render time must be ",
+         "written before it is staged.", call. = FALSE)
+  }
+
   if (is.null(stageDir) || !nzchar(stageDir)) {
     return(path)
   }
@@ -60,13 +73,6 @@ stageFigure <- function(path,
     stop("stageFigure(): the chapter is staged into '", stageDir, "', but knitr ",
          "does not say where the document is rendered, so there is nowhere to ",
          "copy to.", call. = FALSE)
-  }
-
-  missing <- path[!file.exists(path)]
-  if (length(missing)) {
-    stop("stageFigure(): no figure at ", paste0("'", missing, "'", collapse = ", "),
-         ", relative to '", getwd(), "'. A figure fetched at render time must be ",
-         "written before it is staged.", call. = FALSE)
   }
 
   ## the reference is resolved against the rendered document, not the module, so
@@ -83,4 +89,40 @@ stageFigure <- function(path,
          " into '", file.path(outputDir, stageDir), "'", call. = FALSE)
   }
   ref
+}
+
+#' Include a module figure from a chunk
+#'
+#' The chunk form of [stageFigure()]: stages `path` and hands the result to
+#' [knitr::include_graphics()], so a module chapter includes the same figure
+#' whether it renders on its own or staged into a manual.
+#'
+#' @details
+#' `knitr::include_graphics(stageFigure(path))` does not work from a staged
+#' chapter. `include_graphics()` checks that the file exists relative to the
+#' working directory, which for a staged chapter is the module's (knitr's
+#' `root.dir`), while the path [stageFigure()] returns is relative to the book
+#' root, where the rendered document resolves it. So this turns that check off
+#' -- [stageFigure()] has already made the same check, against the right
+#' directory -- and passes everything else through.
+#'
+#' Use [stageFigure()] directly only to write the markdown yourself, e.g. for a
+#' linked badge, `cat(paste0("[![alt](", stageFigure(p), ")](", url, ")"))`.
+#'
+#' @inheritParams stageFigure
+#'
+#' @param ... further arguments to [knitr::include_graphics()], e.g. `dpi`.
+#'
+#' @return what [knitr::include_graphics()] returns.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## in a module chapter's figure chunk, instead of
+#' ## knitr::include_graphics(normPath("figures/schematic.png")):
+#' includeFigure("figures/schematic.png")
+#' }
+includeFigure <- function(path, ...) {
+  knitr::include_graphics(stageFigure(path), error = FALSE, ...)
 }

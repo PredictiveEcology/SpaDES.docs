@@ -17,6 +17,18 @@
   figure fetched at render time is handled the same way -- write it into the
   module's `figures/` as usual, then pass it through.
 
+* `includeFigure()` is the chunk form: it stages a figure and passes it to
+  `knitr::include_graphics()`. `include_graphics(stageFigure(path))` cannot work
+  from a staged chapter, because `include_graphics()` checks the file against the
+  working directory -- the module's -- while the staged path is relative to the
+  book root. `stageFigure()` makes the same check against the right directory,
+  in both modes, so turning knitr's off loses nothing.
+
+* `prepManualRmds()` turns caching off for any chunk that calls `stageFigure()`
+  or `includeFigure()`. knitr serves a cached chunk's output without re-running
+  its code, so the copy was skipped and, from the second build on, the chapter
+  referenced a file that was never staged. Modules commonly cache whole chapters.
+
 * `prepManualRmds()` copies the images a module chapter references in beside the
   staged chapter, and rewrites the references to match. A staged chapter is read
   from the book root, so a relative image path in prose was resolved against the
