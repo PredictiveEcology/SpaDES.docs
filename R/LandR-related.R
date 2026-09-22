@@ -199,14 +199,7 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
       sub("(.*)\\}", "\\1, eval = TRUE\\}", opts)
     }
   }
-  if (isFALSE(grepl("cache[[:space:]]*=[[:space:]]*FALSE", opts))) {
-    opts <- if (grepl("cache[^.]", opts)) {
-      sub("(.*)(cache[[:space:]]*=[[:space:]]*)([[:alnum:]]+)(.*)\\}", "\\1\\2FALSE\\4\\}", opts)
-    } else {
-      sub("(.*)\\}", "\\1, cache = FALSE\\}", opts)
-    }
-  }
-  lines[at] <- opts
+  lines[at] <- uncacheChunk(opts)
 
   ## root.dir, within the setup chunk only
   inSetup <- chunkLines(lines, at)
@@ -231,6 +224,29 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
                     paste0("knitr::opts_knit$set(root.dir = '",
                            normPath(dirname(x)), "')"),
                     after = at)
+  }
+
+  ## where stageFigure() puts this chapter's figures. A directory of the module's
+  ## own, because modules reuse conventional names -- every one writes
+  ## figures/moduleVersionBadge.png -- and one shared directory left each chapter
+  ## showing the badge of the module knitted last. Setting it is also how
+  ## stageFigure() knows the chapter is staged at all. knit() restores opts_knit
+  ## when it returns, so the setting cannot outlive the book.
+  lines <- append(lines,
+                  paste0("knitr::opts_knit$set(SpaDES.docs.stageDir = '",
+                         moduleStageDir(stagingPath, modName), "')"),
+                  after = at)
+
+  ## A chunk that stages a figure has to run on every build: knitr serves a cached
+  ## chunk's OUTPUT without re-running its CODE, so the copy would be skipped and
+  ## the chapter would reference a file that was never staged -- on the second
+  ## build, since the first one fills the cache. Modules commonly set cache = TRUE
+  ## for the whole chapter. These chunks only name a file, so nothing is lost.
+  cls <- classifyRmdLines(lines)
+  for (h in which(cls == "chunkHeader")) {
+    if (any(grepl("\\b(stageFigure|includeFigure)\\(", lines[chunkLines(lines, h, cls)]))) {
+      lines[h] <- uncacheChunk(lines[h])
+    }
   }
 
   ## cache.rebuild, likewise within the setup chunk. A settable occurrence, not
@@ -458,8 +474,7 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
 ## would change what the module RUNS, and a chunk already evaluates with
 ## `root.dir` pointing at the module.
 stageModuleImages <- function(lines, moduleDir, modName, stagingPath) {
-  stagingPath <- sub("/+$", "", stagingPath)
-  dest <- file.path(stagingPath, modName)
+  dest <- moduleStageDir(stagingPath, modName)
   ## a previous run's copies must not linger: an image dropped from the module
   ## would otherwise keep rendering from the stale copy
   unlink(dest, recursive = TRUE)
@@ -516,4 +531,23 @@ stageOneImage <- function(img, moduleDir, dest) {
     stop("prepManualRmds(): could not copy ", src, " to ", to)
   }
   paste0(head, to, rest, ")")
+}
+
+## The directory a staged chapter's figures live in, relative to the book root.
+## Shared by the prose images prepManualRmds() copies and the chunk figures
+## stageFigure() copies, so a module's figures all end up in one place.
+moduleStageDir <- function(stagingPath, modName) {
+  file.path(sub("/+$", "", stagingPath), modName)
+}
+
+## Force `cache = FALSE` in a chunk header, whatever it said before.
+uncacheChunk <- function(header) {
+  if (grepl("cache[[:space:]]*=[[:space:]]*FALSE", header)) {
+    return(header)
+  }
+  if (grepl("cache[^.]", header)) {
+    sub("(.*)(cache[[:space:]]*=[[:space:]]*)([[:alnum:]]+)(.*)\\}", "\\1\\2FALSE\\4\\}", header)
+  } else {
+    sub("(.*)\\}", "\\1, cache = FALSE\\}", header)
+  }
 }

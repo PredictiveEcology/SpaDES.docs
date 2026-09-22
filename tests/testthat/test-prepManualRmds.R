@@ -439,3 +439,69 @@ test_that("prepManualRmds() leaves image paths it must not rewrite alone", {
   ## what the module RUNS, and `root.dir` already points chunks at the module
   expect_length(grep('include_graphics("figures/inside-a-chunk.png")', chapter, fixed = TRUE), 1)
 })
+
+test_that("prepManualRmds() tells stageFigure() where the chapter's figures go", {
+  localBook("modStage")
+  writeModule("modStage", "modules", body = "Body.")
+
+  chapter <- readLines(prepManualRmds("modules"))
+  setup <- grep("^```\\{r setup-modStage", chapter)
+
+  ## per module, beside the staged chapter -- the same directory the prose images
+  ## are copied into -- and set inside the setup chunk, so it is in force for
+  ## every later chunk of this chapter and for no other
+  line <- grep("SpaDES.docs.stageDir", chapter, fixed = TRUE)
+  expect_length(line, 1L)
+  expect_match(chapter[line], "SpaDES.docs.stageDir = '_manual_rmds/modStage'", fixed = TRUE)
+  expect_true(line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1)
+})
+
+test_that("prepManualRmds() turns caching off for chunks that stage figures", {
+  localBook("modCache")
+  writeModule("modCache", "modules", body = c(
+    "```{r fig-staged, fig.cap = 'a figure'}",
+    'SpaDES.docs::includeFigure("figures/x.png")',
+    "```",
+    "",
+    "```{r badge-staged, results = 'asis', cache = TRUE}",
+    'cat(SpaDES.docs::stageFigure("figures/b.png"))',
+    "```",
+    "",
+    "```{r unrelated, cache = TRUE}",
+    "1 + 1",
+    "```",
+    "",
+    "```{r already-off, cache = FALSE}",
+    'SpaDES.docs::includeFigure("figures/y.png")',
+    "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## a chunk served from knitr's cache replays its OUTPUT without re-running its
+  ## CODE, so the copy never happens: the next build references an image that
+  ## was never staged. These chunks are trivial, so there is nothing to lose.
+  expect_match(grep("^```\\{r fig-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
+  expect_no_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## and nothing else is touched
+  expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## a header that already says so is left exactly as it was, not given a second
+  ## `cache = FALSE`
+  expect_identical(grep("^```\\{r already-off", chapter, value = TRUE),
+                   "```{r already-off, cache = FALSE}")
+})
+
+test_that("prepManualRmds() leaves an image the module does not hold, and says so", {
+  localBook("modMiss")
+  writeModule("modMiss", "modules",
+              body = c("![fetched at render time](figures/not-yet-downloaded.png)",
+                       "",
+                       "A stray ![ that never closes, which must not trip the rewrite."))
+
+  expect_message(chapter <- readLines(prepManualRmds("modules")),
+                 "not in the module, so they were left as-is: figures/not-yet-downloaded.png",
+                 fixed = TRUE)
+  ## guessing a destination would only move the broken link
+  expect_length(grep("](figures/not-yet-downloaded.png)", chapter, fixed = TRUE), 1)
+  expect_length(grep("A stray ![ that never closes", chapter, fixed = TRUE), 1)
+})

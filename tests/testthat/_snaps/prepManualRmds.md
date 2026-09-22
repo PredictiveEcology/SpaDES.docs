@@ -8,6 +8,7 @@
       
       ```{r setup-modT, include = FALSE, eval = TRUE, cache = FALSE}
       knitr::opts_chunk$set(cache.rebuild = FALSE)
+      knitr::opts_knit$set(SpaDES.docs.stageDir = '_manual_rmds/modT')
       knitr::opts_knit$set(root.dir = '<moduledir>')
       knitr::opts_chunk$set(echo = TRUE)
       ```

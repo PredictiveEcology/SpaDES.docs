@@ -1,14 +1,33 @@
 # SpaDES.docs (development version)
 
-* `stageFigure()` puts a figure next to the rendered document and returns its
-  relative path, so a module chapter references the same path whether it renders
-  on its own or staged into a manual. It replaces `normPath()` in a figure or
-  badge chunk, which produces a path that is correct only on the machine that
+* `stageFigure()` gives a figure or badge chunk a path that works both when the
+  module renders on its own and when its chapter is staged into a manual. It
+  replaces `normPath()`, which produces a path correct only on the machine that
   built the book: the published LandR manual currently serves
   `src="/home/runner/work/.../figures/..."` from every module chapter, a dead
-  link for every reader, with the build green throughout. A figure fetched at
-  render time is handled the same way -- write it into the module's `figures/`
-  as usual, then pass it through.
+  link for every reader, with the build green throughout. Standalone, the path
+  comes back unchanged. Staged, the figure is copied into a directory of the
+  module's own beside the chapter -- the one `prepManualRmds()` copies the
+  chapter's prose images into -- and the relative path to that copy is returned,
+  so it is published with the book. Per module because modules reuse file names:
+  every one writes `figures/moduleVersionBadge.png`, and a shared directory
+  showed each chapter the badge of the module knitted last. `prepManualRmds()`
+  marks a staged chapter by setting the knitr option `SpaDES.docs.stageDir` in
+  its setup chunk. Accepts a vector, as `knitr::include_graphics()` does. A
+  figure fetched at render time is handled the same way -- write it into the
+  module's `figures/` as usual, then pass it through.
+
+* `includeFigure()` is the chunk form: it stages a figure and passes it to
+  `knitr::include_graphics()`. `include_graphics(stageFigure(path))` cannot work
+  from a staged chapter, because `include_graphics()` checks the file against the
+  working directory -- the module's -- while the staged path is relative to the
+  book root. `stageFigure()` makes the same check against the right directory,
+  in both modes, so turning knitr's off loses nothing.
+
+* `prepManualRmds()` turns caching off for any chunk that calls `stageFigure()`
+  or `includeFigure()`. knitr serves a cached chunk's output without re-running
+  its code, so the copy was skipped and, from the second build on, the chapter
+  referenced a file that was never staged. Modules commonly cache whole chapters.
 
 * `prepManualRmds()` copies the images a module chapter references in beside the
   staged chapter, and rewrites the references to match. A staged chapter is read
