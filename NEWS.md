@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.5.0
 
 * `stageFigure()` gives a figure or badge chunk a path that works both when the
   module renders on its own and when its chapter is staged into a manual. It
