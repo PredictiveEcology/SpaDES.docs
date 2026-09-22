@@ -127,3 +127,30 @@ test_that("includeFigure() is include_graphics() when the module renders on its 
   expect_s3_class(out, "knit_image_paths")
   expect_identical(as.character(out), "figures/schematic.png")
 })
+
+test_that("stageFigure() refuses to stage when knitr gives no output directory", {
+  localStagedBook("modA")
+
+  ## staged, but with nowhere to copy to: guessing would write somewhere the
+  ## rendered document cannot see
+  expect_error(withr::with_dir("modules/modA",
+                               stageFigure("figures/moduleVersionBadge.png",
+                                           stageDir = "_manual_rmds/modA", outputDir = NULL)),
+               "nowhere to copy")
+})
+
+test_that("stageFigure() says so when the copy itself fails", {
+  skip_on_os("windows") ## directory permissions are not enforced the same way
+  skip_if(identical(Sys.info()[["effective_user"]], "root"), "root ignores permissions")
+  d <- localStagedBook("modA")
+  dest <- file.path("manual", "_manual_rmds", "modA", "figures")
+  dir.create(dest, recursive = TRUE)
+  Sys.chmod(dest, "555")
+  withr::defer(Sys.chmod(dest, "755"))
+
+  expect_error(withr::with_dir("modules/modA",
+                               stageFigure("figures/moduleVersionBadge.png",
+                                           stageDir = "_manual_rmds/modA",
+                                           outputDir = file.path(d, "manual"))),
+               "could not copy")
+})

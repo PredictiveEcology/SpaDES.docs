@@ -469,6 +469,10 @@ test_that("prepManualRmds() turns caching off for chunks that stage figures", {
     "",
     "```{r unrelated, cache = TRUE}",
     "1 + 1",
+    "```",
+    "",
+    "```{r already-off, cache = FALSE}",
+    'SpaDES.docs::includeFigure("figures/y.png")',
     "```"))
 
   chapter <- readLines(prepManualRmds("modules"))
@@ -481,4 +485,23 @@ test_that("prepManualRmds() turns caching off for chunks that stage figures", {
   expect_no_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
   ## and nothing else is touched
   expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  ## a header that already says so is left exactly as it was, not given a second
+  ## `cache = FALSE`
+  expect_identical(grep("^```\\{r already-off", chapter, value = TRUE),
+                   "```{r already-off, cache = FALSE}")
+})
+
+test_that("prepManualRmds() leaves an image the module does not hold, and says so", {
+  localBook("modMiss")
+  writeModule("modMiss", "modules",
+              body = c("![fetched at render time](figures/not-yet-downloaded.png)",
+                       "",
+                       "A stray ![ that never closes, which must not trip the rewrite."))
+
+  expect_message(chapter <- readLines(prepManualRmds("modules")),
+                 "not in the module, so they were left as-is: figures/not-yet-downloaded.png",
+                 fixed = TRUE)
+  ## guessing a destination would only move the broken link
+  expect_length(grep("](figures/not-yet-downloaded.png)", chapter, fixed = TRUE), 1)
+  expect_length(grep("A stray ![ that never closes", chapter, fixed = TRUE), 1)
 })
