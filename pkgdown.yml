@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   building-a-continuously-updated-manual: building-a-continuously-updated-manual.html
   building-a-project-manual: building-a-project-manual.html
-last_built: 2026-09-21T18:19Z
+last_built: 2026-09-22T19:16Z
 urls:
   reference: https://predictiveecology.github.io/SpaDES.docs/reference
   article: https://predictiveecology.github.io/SpaDES.docs/articles

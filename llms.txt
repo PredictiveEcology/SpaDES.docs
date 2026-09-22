@@ -79,6 +79,9 @@ package in the same call.
 - [`downloadCSL()`](https://predictiveecology.github.io/SpaDES.docs/reference/downloadCSL.md)
   : Fetch a citation style
 
+- [`includeFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/includeFigure.md)
+  : Include a module figure from a chunk
+
 - [`installModulePkgs()`](https://predictiveecology.github.io/SpaDES.docs/reference/installModulePkgs.md)
   : Install the packages a manual's modules need
 
@@ -93,6 +96,9 @@ package in the same call.
 
 - [`publishManualArchive()`](https://predictiveecology.github.io/SpaDES.docs/reference/publishManualArchive.md)
   : Publish a manual's archived releases alongside the site
+
+- [`stageFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/stageFigure.md)
+  : Put a module figure where the rendered document can find it
 
 - [`stagePagesFiles()`](https://predictiveecology.github.io/SpaDES.docs/reference/stagePagesFiles.md)
   : Stage the files GitHub Pages needs, inside the published directory
