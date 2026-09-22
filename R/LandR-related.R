@@ -233,6 +233,17 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
                     after = at)
   }
 
+  ## where stageFigure() puts this chapter's figures. A directory of the module's
+  ## own, because modules reuse conventional names -- every one writes
+  ## figures/moduleVersionBadge.png -- and one shared directory left each chapter
+  ## showing the badge of the module knitted last. Setting it is also how
+  ## stageFigure() knows the chapter is staged at all. knit() restores opts_knit
+  ## when it returns, so the setting cannot outlive the book.
+  lines <- append(lines,
+                  paste0("knitr::opts_knit$set(SpaDES.docs.stageDir = '",
+                         moduleStageDir(stagingPath, modName), "')"),
+                  after = at)
+
   ## cache.rebuild, likewise within the setup chunk. A settable occurrence, not
   ## the word appearing anywhere: a module mentioning it only in a comment must
   ## still get one injected.
@@ -458,8 +469,7 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
 ## would change what the module RUNS, and a chunk already evaluates with
 ## `root.dir` pointing at the module.
 stageModuleImages <- function(lines, moduleDir, modName, stagingPath) {
-  stagingPath <- sub("/+$", "", stagingPath)
-  dest <- file.path(stagingPath, modName)
+  dest <- moduleStageDir(stagingPath, modName)
   ## a previous run's copies must not linger: an image dropped from the module
   ## would otherwise keep rendering from the stale copy
   unlink(dest, recursive = TRUE)
@@ -516,4 +526,11 @@ stageOneImage <- function(img, moduleDir, dest) {
     stop("prepManualRmds(): could not copy ", src, " to ", to)
   }
   paste0(head, to, rest, ")")
+}
+
+## The directory a staged chapter's figures live in, relative to the book root.
+## Shared by the prose images prepManualRmds() copies and the chunk figures
+## stageFigure() copies, so a module's figures all end up in one place.
+moduleStageDir <- function(stagingPath, modName) {
+  file.path(sub("/+$", "", stagingPath), modName)
 }

@@ -439,3 +439,19 @@ test_that("prepManualRmds() leaves image paths it must not rewrite alone", {
   ## what the module RUNS, and `root.dir` already points chunks at the module
   expect_length(grep('include_graphics("figures/inside-a-chunk.png")', chapter, fixed = TRUE), 1)
 })
+
+test_that("prepManualRmds() tells stageFigure() where the chapter's figures go", {
+  localBook("modStage")
+  writeModule("modStage", "modules", body = "Body.")
+
+  chapter <- readLines(prepManualRmds("modules"))
+  setup <- grep("^```\\{r setup-modStage", chapter)
+
+  ## per module, beside the staged chapter -- the same directory the prose images
+  ## are copied into -- and set inside the setup chunk, so it is in force for
+  ## every later chunk of this chapter and for no other
+  line <- grep("SpaDES.docs.stageDir", chapter, fixed = TRUE)
+  expect_length(line, 1L)
+  expect_match(chapter[line], "SpaDES.docs.stageDir = '_manual_rmds/modStage'", fixed = TRUE)
+  expect_true(line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1)
+})
