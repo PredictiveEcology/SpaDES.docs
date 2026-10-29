@@ -19,10 +19,14 @@ test_that("stageFigure() keeps each module's figures apart", {
 
   refs <- c(modA = NA_character_, modB = NA_character_)
   for (m in names(refs)) {
-    localOptsKnit(output.dir = file.path(d, "manual"),
-                  SpaDES.docs.stageDir = file.path("_manual_rmds", m))
-    refs[[m]] <- withr::with_dir(file.path("modules", m),
-                                 stageFigure("figures/moduleVersionBadge.png"))
+    localOptsKnit(
+      output.dir = file.path(d, "manual"),
+      SpaDES.docs.stageDir = file.path("_manual_rmds", m)
+    )
+    refs[[m]] <- withr::with_dir(
+      file.path("modules", m),
+      stageFigure("figures/moduleVersionBadge.png")
+    )
   }
 
   ## a single shared destination left every chapter showing the badge of whichever
@@ -36,8 +40,7 @@ test_that("stageFigure() keeps each module's figures apart", {
 
 test_that("stageFigure() returns a relative path that resolves from the book root", {
   d <- localStagedBook("modA")
-  localOptsKnit(output.dir = file.path(d, "manual"),
-                SpaDES.docs.stageDir = "_manual_rmds/modA")
+  localOptsKnit(output.dir = file.path(d, "manual"), SpaDES.docs.stageDir = "_manual_rmds/modA")
 
   ref <- withr::with_dir("modules/modA", stageFigure("figures/moduleVersionBadge.png"))
 
@@ -48,12 +51,13 @@ test_that("stageFigure() returns a relative path that resolves from the book roo
 test_that("stageFigure() stages every path it is given", {
   d <- localStagedBook("modA")
   writeLines("second", "modules/modA/figures/other.png")
-  localOptsKnit(output.dir = file.path(d, "manual"),
-                SpaDES.docs.stageDir = "_manual_rmds/modA")
+  localOptsKnit(output.dir = file.path(d, "manual"), SpaDES.docs.stageDir = "_manual_rmds/modA")
 
   ## include_graphics() takes a vector, and module chapters pass one
-  refs <- withr::with_dir("modules/modA",
-                          stageFigure(c("figures/moduleVersionBadge.png", "figures/other.png")))
+  refs <- withr::with_dir(
+    "modules/modA",
+    stageFigure(c("figures/moduleVersionBadge.png", "figures/other.png"))
+  )
 
   expect_length(refs, 2L)
   expect_true(all(file.exists(file.path("manual", refs))))
@@ -61,8 +65,7 @@ test_that("stageFigure() stages every path it is given", {
 
 test_that("stageFigure() drops a leading ./ from the reference it returns", {
   d <- localStagedBook("modA")
-  localOptsKnit(output.dir = file.path(d, "manual"),
-                SpaDES.docs.stageDir = "_manual_rmds/modA")
+  localOptsKnit(output.dir = file.path(d, "manual"), SpaDES.docs.stageDir = "_manual_rmds/modA")
 
   ref <- withr::with_dir("modules/modA", stageFigure("./figures/moduleVersionBadge.png"))
 
@@ -84,12 +87,13 @@ test_that("stageFigure() copies nothing when the chapter has not been staged", {
 
 test_that("stageFigure() says so when a staged figure is not there", {
   d <- localStagedBook("modA")
-  localOptsKnit(output.dir = file.path(d, "manual"),
-                SpaDES.docs.stageDir = "_manual_rmds/modA")
+  localOptsKnit(output.dir = file.path(d, "manual"), SpaDES.docs.stageDir = "_manual_rmds/modA")
 
   ## silence here is what ships a chapter with a missing image and a green build
-  expect_error(withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
-               "no figure at")
+  expect_error(
+    withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
+    "no figure at"
+  )
 })
 
 test_that("stageFigure() checks the figure exists when rendering on its own too", {
@@ -98,15 +102,16 @@ test_that("stageFigure() checks the figure exists when rendering on its own too"
 
   ## the same check in both modes, so a caller that turns knitr's own check off
   ## (as includeFigure() must) loses nothing
-  expect_error(withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
-               "no figure at")
+  expect_error(
+    withr::with_dir("modules/modA", stageFigure("figures/never-downloaded.png")),
+    "no figure at"
+  )
 })
 
 test_that("includeFigure() works from a staged chapter, where include_graphics(stageFigure()) cannot", {
   d <- localStagedBook("modA")
   writeLines("schematic", "modules/modA/figures/schematic.png")
-  localOptsKnit(output.dir = file.path(d, "manual"),
-                SpaDES.docs.stageDir = "_manual_rmds/modA")
+  localOptsKnit(output.dir = file.path(d, "manual"), SpaDES.docs.stageDir = "_manual_rmds/modA")
 
   ## include_graphics() checks file.exists() against the WORKING directory -- the
   ## module, via root.dir -- but the staged path is relative to the BOOK ROOT
@@ -133,10 +138,17 @@ test_that("stageFigure() refuses to stage when knitr gives no output directory",
 
   ## staged, but with nowhere to copy to: guessing would write somewhere the
   ## rendered document cannot see
-  expect_error(withr::with_dir("modules/modA",
-                               stageFigure("figures/moduleVersionBadge.png",
-                                           stageDir = "_manual_rmds/modA", outputDir = NULL)),
-               "nowhere to copy")
+  expect_error(
+    withr::with_dir(
+      "modules/modA",
+      stageFigure(
+        "figures/moduleVersionBadge.png",
+        stageDir = "_manual_rmds/modA",
+        outputDir = NULL
+      )
+    ),
+    "nowhere to copy"
+  )
 })
 
 test_that("stageFigure() says so when the copy itself fails", {
@@ -148,9 +160,15 @@ test_that("stageFigure() says so when the copy itself fails", {
   Sys.chmod(dest, "555")
   withr::defer(Sys.chmod(dest, "755"))
 
-  expect_error(withr::with_dir("modules/modA",
-                               stageFigure("figures/moduleVersionBadge.png",
-                                           stageDir = "_manual_rmds/modA",
-                                           outputDir = file.path(d, "manual"))),
-               "could not copy")
+  expect_error(
+    withr::with_dir(
+      "modules/modA",
+      stageFigure(
+        "figures/moduleVersionBadge.png",
+        stageDir = "_manual_rmds/modA",
+        outputDir = file.path(d, "manual")
+      )
+    ),
+    "could not copy"
+  )
 })

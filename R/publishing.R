@@ -23,22 +23,29 @@
 #' @export
 stagePagesFiles <- function(path, cname = NULL) {
   if (!dir.exists(path)) {
-    stop("stagePagesFiles(): '", path, "' does not exist. Render the book first.",
-         call. = FALSE)
+    stop("stagePagesFiles(): '", path, "' does not exist. Render the book first.", call. = FALSE)
   }
   file.create(file.path(path, ".nojekyll"))
   if (!is.null(cname)) {
     if (grepl("^[[:alpha:]]+://", cname)) {
-      stop("stagePagesFiles(): `cname` must be a bare domain, with no scheme: got '",
-           cname, "'", call. = FALSE)
+      stop(
+        "stagePagesFiles(): `cname` must be a bare domain, with no scheme: got '",
+        cname,
+        "'",
+        call. = FALSE
+      )
     }
     writeLines(cname, file.path(path, "CNAME"))
   }
   ## say so: a deploy that quietly lost its CNAME looks exactly like one that
   ## kept it, until the custom domain stops resolving
-  message("stagePagesFiles(): wrote .nojekyll",
-          if (!is.null(cname)) paste0(" and CNAME (", cname, ")") else "",
-          " to '", path, "'.")
+  message(
+    "stagePagesFiles(): wrote .nojekyll",
+    if (!is.null(cname)) paste0(" and CNAME (", cname, ")") else "",
+    " to '",
+    path,
+    "'."
+  )
   invisible(path)
 }
 
@@ -81,18 +88,29 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
     return(invisible(NULL))
   }
   if (!nzchar(version)) {
-    stop("archiveManualPDF(): `version` is empty, so the archived file would ",
-         "not be identifiable.", call. = FALSE)
+    stop(
+      "archiveManualPDF(): `version` is empty, so the archived file would ",
+      "not be identifiable.",
+      call. = FALSE
+    )
   }
   ## normalised because checkPath() returns the path as given when it creates the
   ## directory and an absolute one when it was already there, so without this the
   ## first build of a manual and every later one disagree about what was archived
-  archiveDir <- normalizePath(checkPath(archiveDir, create = TRUE),
-                              winslash = "/", mustWork = FALSE)
+  archiveDir <- normalizePath(
+    checkPath(archiveDir, create = TRUE),
+    winslash = "/",
+    mustWork = FALSE
+  )
   dest <- file.path(archiveDir, paste0(prefix, "-v", version, ".pdf"))
   if (file.exists(dest)) {
-    message("archiveManualPDF(): v", version, " is already archived as '",
-            basename(dest), "'; left as it is.")
+    message(
+      "archiveManualPDF(): v",
+      version,
+      " is already archived as '",
+      basename(dest),
+      "'; left as it is."
+    )
     return(invisible(dest))
   }
   file.copy(from = pdf, to = dest)
@@ -133,17 +151,19 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
 #'
 #' @export
 #' @importFrom Require checkPath
-publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
-                                 docsDir, manualName, subdir = "archive") {
+publishManualArchive <- function(
+  archiveDir = file.path("archive", "pdf"),
+  docsDir,
+  manualName,
+  subdir = "archive"
+) {
   if (!dir.exists(archiveDir)) {
-    message("publishManualArchive(): no archive at '", archiveDir,
-            "', nothing published.")
+    message("publishManualArchive(): no archive at '", archiveDir, "', nothing published.")
     return(invisible(NULL))
   }
   pdfs <- list.files(archiveDir, pattern = "[.]pdf$", full.names = TRUE)
   if (!length(pdfs)) {
-    message("publishManualArchive(): no PDFs in '", archiveDir,
-            "', nothing published.")
+    message("publishManualArchive(): no PDFs in '", archiveDir, "', nothing published.")
     return(invisible(NULL))
   }
 
@@ -156,23 +176,40 @@ publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
   sizes <- file.size(file.path(outDir, nms)) / 1048576
 
   index <- file.path(docsDir, subdir, "index.html")
-  writeLines(c(
-    "<!DOCTYPE html>",
-    '<html lang="en"><head><meta charset="utf-8">',
-    paste0("<title>", manualName, " &mdash; archived versions</title>"),
-    "<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem}",
-    "li{margin:.4rem 0}span{color:#666;font-size:.9em}</style>",
-    "</head><body>",
-    paste0("  <h1>", manualName, " &mdash; archived versions</h1>"),
-    paste0('  <p>Released versions of this manual. The current one is <a href="../">here</a>.</p>'),
-    "  <ul>",
-    sprintf('    <li><a href="pdf/%s">%s v%s</a> <span>(PDF, %.1f MB)</span></li>',
-            nms, manualName, vers, sizes),
-    "  </ul>",
-    "</body></html>"
-  ), index)
-  message("publishManualArchive(): published ", length(nms), " archived PDF(s) to '",
-          file.path(subdir, "pdf"), "', newest v", vers[1], ".")
+  writeLines(
+    c(
+      "<!DOCTYPE html>",
+      '<html lang="en"><head><meta charset="utf-8">',
+      paste0("<title>", manualName, " &mdash; archived versions</title>"),
+      "<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem}",
+      "li{margin:.4rem 0}span{color:#666;font-size:.9em}</style>",
+      "</head><body>",
+      paste0("  <h1>", manualName, " &mdash; archived versions</h1>"),
+      paste0(
+        '  <p>Released versions of this manual. The current one is <a href="../">here</a>.</p>'
+      ),
+      "  <ul>",
+      sprintf(
+        '    <li><a href="pdf/%s">%s v%s</a> <span>(PDF, %.1f MB)</span></li>',
+        nms,
+        manualName,
+        vers,
+        sizes
+      ),
+      "  </ul>",
+      "</body></html>"
+    ),
+    index
+  )
+  message(
+    "publishManualArchive(): published ",
+    length(nms),
+    " archived PDF(s) to '",
+    file.path(subdir, "pdf"),
+    "', newest v",
+    vers[1],
+    "."
+  )
   invisible(index)
 }
 
@@ -187,8 +224,7 @@ archivedPDFs <- function(archiveDir) {
   versions <- sub("^.*-v(.*)[.]pdf$", "\\1", files)
   ## newest first. strict = FALSE so a file that is not named for a version
   ## sorts last rather than taking the whole build down
-  ord <- order(numeric_version(versions, strict = FALSE), decreasing = TRUE,
-               na.last = TRUE)
+  ord <- order(numeric_version(versions, strict = FALSE), decreasing = TRUE, na.last = TRUE)
   data.frame(file = files[ord], version = versions[ord])
 }
 
@@ -227,10 +263,12 @@ archivedPDFs <- function(archiveDir) {
 #' ## in index.Rmd, in a `results = "asis"` chunk:
 #' cat(manualArchiveLinks(manualName = "LandR Manual"), sep = "")
 #' }
-manualArchiveLinks <- function(archiveDir = file.path("archive", "pdf"),
-                               manualName,
-                               exclude = Sys.getenv("SPADES_MANUAL_VERSION"),
-                               urlPrefix = file.path("archive", "pdf")) {
+manualArchiveLinks <- function(
+  archiveDir = file.path("archive", "pdf"),
+  manualName,
+  exclude = Sys.getenv("SPADES_MANUAL_VERSION"),
+  urlPrefix = file.path("archive", "pdf")
+) {
   archived <- archivedPDFs(archiveDir)
   if (!nrow(archived)) {
     return(character(0))
@@ -242,6 +280,13 @@ manualArchiveLinks <- function(archiveDir = file.path("archive", "pdf"),
     return(character(0))
   }
 
-  paste0("-   [", manualName, " v", archived$version, "](",
-         file.path(urlPrefix, archived$file), ")\n")
+  paste0(
+    "-   [",
+    manualName,
+    " v",
+    archived$version,
+    "](",
+    file.path(urlPrefix, archived$file),
+    ")\n"
+  )
 }

@@ -67,8 +67,7 @@ ensureSetupChunk <- function(lines, modName) {
   at <- which(cls == "chunkHeader" & grepl("\\{r[ ,]*setup", lines))
 
   if (length(at) > 1L) {
-    stop("prepManualRmds(): ", modName, " has ", length(at),
-         " setup chunks; expected at most one")
+    stop("prepManualRmds(): ", modName, " has ", length(at), " setup chunks; expected at most one")
   }
   if (length(at)) {
     return(list(lines = lines, at = at))
@@ -77,10 +76,11 @@ ensureSetupChunk <- function(lines, modName) {
   ## after the chapter title if there is one, otherwise at the top
   title <- which(cls == "prose" & grepl("^# ", lines))
   after <- if (length(title)) title[1] else 0L
-  lines <- append(lines,
-                  c("", paste0("```{r setup-", gsub("_", "-", modName),
-                               ", include = FALSE}"), "```"),
-                  after = after)
+  lines <- append(
+    lines,
+    c("", paste0("```{r setup-", gsub("_", "-", modName), ", include = FALSE}"), "```"),
+    after = after
+  )
   list(lines = lines, at = after + 2L)
 }
 
@@ -123,8 +123,7 @@ textRefDefs <- function(lines) {
   ## the first line of a prose block: preceded by a blank line, or by the HTML
   ## comment SpaDES.core's module template puts directly above the list (real
   ## LandR modules leave a blank line there, the template does not)
-  ownBlock <- (!nzchar(trimws(prev)) | grepl("^[[:space:]]*<!--", prev)) &
-    prevCls != "chunkBody"
+  ownBlock <- (!nzchar(trimws(prev)) | grepl("^[[:space:]]*<!--", prev)) & prevCls != "chunkBody"
 
   which(cls == "prose" & grepl("^\\(ref:[^)]+\\)", lines) & ownBlock)
 }
@@ -208,22 +207,28 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
     stop("prepManualRmds(): ", modName, " sets root.dir more than once in its setup chunk")
   }
   if (length(rootDirLine)) {
-    code <- sub("(.*root\\.dir.*=[[:space:]]*)(.*)(\\))",
-                paste0("\\1'", normPath(dirname(x)), "'\\3"),
-                lines[rootDirLine])
+    code <- sub(
+      "(.*root\\.dir.*=[[:space:]]*)(.*)(\\))",
+      paste0("\\1'", normPath(dirname(x)), "'\\3"),
+      lines[rootDirLine]
+    )
     ## the substitution closes on the last ")" of the line it matched, so a call
     ## split over several lines would leave an orphaned ")" behind
     if (inherits(try(parse(text = code), silent = TRUE), "try-error")) {
-      stop("prepManualRmds(): cannot rewrite root.dir in ", modName,
-           ". It must be set on a single line, ",
-           "e.g. knitr::opts_knit$set(root.dir = '..')")
+      stop(
+        "prepManualRmds(): cannot rewrite root.dir in ",
+        modName,
+        ". It must be set on a single line, ",
+        "e.g. knitr::opts_knit$set(root.dir = '..')"
+      )
     }
     lines[rootDirLine] <- code
   } else {
-    lines <- append(lines,
-                    paste0("knitr::opts_knit$set(root.dir = '",
-                           normPath(dirname(x)), "')"),
-                    after = at)
+    lines <- append(
+      lines,
+      paste0("knitr::opts_knit$set(root.dir = '", normPath(dirname(x)), "')"),
+      after = at
+    )
   }
 
   ## where stageFigure() puts this chapter's figures. A directory of the module's
@@ -232,10 +237,15 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   ## showing the badge of the module knitted last. Setting it is also how
   ## stageFigure() knows the chapter is staged at all. knit() restores opts_knit
   ## when it returns, so the setting cannot outlive the book.
-  lines <- append(lines,
-                  paste0("knitr::opts_knit$set(SpaDES.docs.stageDir = '",
-                         moduleStageDir(stagingPath, modName), "')"),
-                  after = at)
+  lines <- append(
+    lines,
+    paste0(
+      "knitr::opts_knit$set(SpaDES.docs.stageDir = '",
+      moduleStageDir(stagingPath, modName),
+      "')"
+    ),
+    after = at
+  )
 
   ## A chunk that stages a figure has to run on every build: knitr serves a cached
   ## chunk's OUTPUT without re-running its CODE, so the copy would be skipped and
@@ -255,14 +265,20 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   inSetup <- chunkLines(lines, at)
   cacheLine <- inSetup[grepl(
     "cache\\.rebuild[[:space:]]*=[[:space:]]*(TRUE|FALSE)[[:space:]]*(,|\\}|\\))",
-    lines[inSetup])]
+    lines[inSetup]
+  )]
   if (length(cacheLine)) {
-    lines[cacheLine] <- sub("(.*cache\\.rebuild.*=[[:space:]]*)(TRUE|FALSE)(.*)",
-                            paste0("\\1", rebuildCache, "\\3"), lines[cacheLine])
+    lines[cacheLine] <- sub(
+      "(.*cache\\.rebuild.*=[[:space:]]*)(TRUE|FALSE)(.*)",
+      paste0("\\1", rebuildCache, "\\3"),
+      lines[cacheLine]
+    )
   } else {
-    lines <- append(lines,
-                    paste0("knitr::opts_chunk$set(cache.rebuild = ", rebuildCache, ")"),
-                    after = at)
+    lines <- append(
+      lines,
+      paste0("knitr::opts_chunk$set(cache.rebuild = ", rebuildCache, ")"),
+      after = at
+    )
   }
 
   ## Literal markdown images in prose are resolved by pandoc against the BOOK
@@ -275,14 +291,20 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   ## absolute path renders locally and then publishes a dead link, because the
   ## deployed site has no /home/<user>/ to serve. The module's own .Rmd is left
   ## alone, so it still renders standalone from its own directory.
-  lines <- stageModuleImages(lines, moduleDir = dirname(x), modName = modName,
-                             stagingPath = stagingPath)
+  lines <- stageModuleImages(
+    lines,
+    moduleDir = dirname(x),
+    modName = modName,
+    stagingPath = stagingPath
+  )
 
   ## the chapter bibliography goes last. A heading line only -- unanchored, this
   ## matched prose, and two matches made a length-2 `if` condition.
   cls <- classifyRmdLines(lines)
-  bib <- which(cls == "prose" &
-                 grepl("^#+[[:space:]]+References[[:space:]]*(\\{[^}]*\\})?[[:space:]]*$", lines))
+  bib <- which(
+    cls == "prose" &
+      grepl("^#+[[:space:]]+References[[:space:]]*(\\{[^}]*\\})?[[:space:]]*$", lines)
+  )
   if (length(bib)) {
     bib <- bib[length(bib)]
     if (!bib %in% c(length(lines), length(lines) - 1L)) {
@@ -335,15 +357,23 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
 #' @importFrom Require normPath
 #' @importFrom data.table data.table rbindlist
 #' @importFrom utils capture.output
-prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NULL,
-                           bookdownYML = "_bookdown.yml",
-                           stagingPath = "_manual_rmds") {
+prepManualRmds <- function(
+  modulePath,
+  rebuildCache = FALSE,
+  ignoreModules = NULL,
+  bookdownYML = "_bookdown.yml",
+  stagingPath = "_manual_rmds"
+) {
   ## checked before anything is written: a missing or unreadable book file used
   ## to surface only after every <module>2.Rmd had been created, leaving them
   ## behind for the caller to clean up
   if (!file.exists(bookdownYML)) {
-    stop("prepManualRmds(): cannot find '", bookdownYML, "'. It is read from the ",
-         "working directory unless `bookdownYML` says otherwise.")
+    stop(
+      "prepManualRmds(): cannot find '",
+      bookdownYML,
+      "'. It is read from the ",
+      "working directory unless `bookdownYML` says otherwise."
+    )
   }
   rmdFiles <- unlist(yaml::read_yaml(bookdownYML)[["rmd_files"]], use.names = FALSE)
 
@@ -362,9 +392,12 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   ## not every subdirectory is a module (hidden caches, retired modules)
   notModules <- !file.exists(moduleRmds)
   if (any(notModules)) {
-    message("prepManualRmds(): skipping ", sum(notModules),
-            " director(ies) with no <name>.Rmd: ",
-            paste(basename(moduleDirs[notModules]), collapse = ", "))
+    message(
+      "prepManualRmds(): skipping ",
+      sum(notModules),
+      " director(ies) with no <name>.Rmd: ",
+      paste(basename(moduleDirs[notModules]), collapse = ", ")
+    )
     moduleRmds <- moduleRmds[!notModules]
   }
 
@@ -373,11 +406,17 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   ## fails with "object 'lineText' not found" -- after every file has been
   ## written. See PredictiveEcology/SpaDES.docs#1.
   if (!length(moduleRmds)) {
-    warning("prepManualRmds(): no modules to prepare in '", modulePath, "'",
-            if (length(ignoreModules)) {
-              paste0(" (after ignoring ", paste(ignoreModules, collapse = ", "), ")")
-            } else "",
-            call. = FALSE)
+    warning(
+      "prepManualRmds(): no modules to prepare in '",
+      modulePath,
+      "'",
+      if (length(ignoreModules)) {
+        paste0(" (after ignoring ", paste(ignoreModules, collapse = ", "), ")")
+      } else {
+        ""
+      },
+      call. = FALSE
+    )
     return(character(0))
   }
 
@@ -389,8 +428,13 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
     file.remove(stale)
   }
 
-  copyModuleRmds <- vapply(moduleRmds, prepOneModuleRmd, rebuildCache = rebuildCache,
-                           stagingPath = stagingPath, FUN.VALUE = character(1))
+  copyModuleRmds <- vapply(
+    moduleRmds,
+    prepOneModuleRmd,
+    rebuildCache = rebuildCache,
+    stagingPath = stagingPath,
+    FUN.VALUE = character(1)
+  )
 
   ## chapter order, for the chapters this call generated -- i.e. those the book
   ## lists from the staging directory. Parsed rather than pattern-matched:
@@ -408,10 +452,14 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   ## bookdown error later with no hint of why.
   listedNotPrepped <- setdiff(bkdwnYMLsub, names(allModules))
   if (length(listedNotPrepped)) {
-    warning("prepManualRmds(): _bookdown.yml lists ", length(listedNotPrepped),
-            " chapter(s) that were not prepared, so text references are not ",
-            "de-duplicated against them: ",
-            paste(basename(listedNotPrepped), collapse = ", "), call. = FALSE)
+    warning(
+      "prepManualRmds(): _bookdown.yml lists ",
+      length(listedNotPrepped),
+      " chapter(s) that were not prepared, so text references are not ",
+      "de-duplicated against them: ",
+      paste(basename(listedNotPrepped), collapse = ", "),
+      call. = FALSE
+    )
   }
   ## and the other direction. This one is quiet: the chapter is written, the
   ## build goes green, and the module is simply absent from the book. Cheap to
@@ -421,10 +469,16 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   ## below says so more usefully than naming every module, so leave it to that.
   preppedNotListed <- setdiff(names(allModules), bkdwnYMLsub)
   if (length(bkdwnYMLsub) && length(preppedNotListed)) {
-    warning("prepManualRmds(): prepared ", length(preppedNotListed),
-            " chapter(s) that ", bookdownYML, " does not list, so they will not ",
-            "appear in the book: ",
-            paste(basename(preppedNotListed), collapse = ", "), call. = FALSE)
+    warning(
+      "prepManualRmds(): prepared ",
+      length(preppedNotListed),
+      " chapter(s) that ",
+      bookdownYML,
+      " does not list, so they will not ",
+      "appear in the book: ",
+      paste(basename(preppedNotListed), collapse = ", "),
+      call. = FALSE
+    )
   }
 
   allModules <- allModules[intersect(bkdwnYMLsub, names(allModules))]
@@ -433,9 +487,15 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   ## this is a warning, not an error -- it used to reach the table below and die
   ## with "object 'lineText' not found". See PredictiveEcology/SpaDES.docs#1.
   if (!length(allModules)) {
-    warning("prepManualRmds(): '", bookdownYML, "' lists no chapters under '",
-            stagingPath, "', so text references were not de-duplicated. ",
-            "The chapters were still written.", call. = FALSE)
+    warning(
+      "prepManualRmds(): '",
+      bookdownYML,
+      "' lists no chapters under '",
+      stagingPath,
+      "', so text references were not de-duplicated. ",
+      "The chapters were still written.",
+      call. = FALSE
+    )
     return(copyModuleRmds)
   }
 
@@ -446,25 +506,29 @@ prepManualRmds <- function(modulePath, rebuildCache = FALSE, ignoreModules = NUL
   refTextLinesID <- rbindlist(refTextLinesID, idcol = "file", use.names = TRUE)
   refTextLinesID[, dups := duplicated(lineText)]
 
-  lapply(split(refTextLinesID, by = "file"), function(dupsTab, allModules) {
-    if (any(dupsTab$dups)) {
-      modLines <- allModules[[unique(dupsTab$file)]]
+  lapply(
+    split(refTextLinesID, by = "file"),
+    function(dupsTab, allModules) {
+      if (any(dupsTab$dups)) {
+        modLines <- allModules[[unique(dupsTab$file)]]
 
-      ## drop in one pass, by mask over the original indices. The loop this
-      ## replaces shortened the vector and then kept indexing it with the old
-      ## line numbers.
-      drop <- dupsTab[which(dups), lineID]
+        ## drop in one pass, by mask over the original indices. The loop this
+        ## replaces shortened the vector and then kept indexing it with the old
+        ## line numbers.
+        drop <- dupsTab[which(dups), lineID]
 
-      ## where a removal leaves a blank line on each side, collapse the pair --
-      ## at the removal site only, not across the whole chapter
-      blank <- !nzchar(trimws(modLines))
-      pad <- drop[drop > 1L & drop < length(modLines)]
-      pad <- pad[blank[pad - 1L] & blank[pad + 1L]]
-      modLines <- modLines[-c(drop, pad + 1L)]
+        ## where a removal leaves a blank line on each side, collapse the pair --
+        ## at the removal site only, not across the whole chapter
+        blank <- !nzchar(trimws(modLines))
+        pad <- drop[drop > 1L & drop < length(modLines)]
+        pad <- pad[blank[pad - 1L] & blank[pad + 1L]]
+        modLines <- modLines[-c(drop, pad + 1L)]
 
-      writeLines(modLines, con = unique(dupsTab$file))
-    }
-  }, allModules = allModules)
+        writeLines(modLines, con = unique(dupsTab$file))
+      }
+    },
+    allModules = allModules
+  )
 
   copyModuleRmds
 }
@@ -496,9 +560,14 @@ stageModuleImages <- function(lines, moduleDir, modName, stagingPath) {
   ## quiet is the wrong default here: the chapter renders, the book goes green,
   ## and the image is simply absent from the published page
   if (length(missing)) {
-    message("prepManualRmds(): ", modName, " references ", length(missing),
-            " image(s) that are not in the module, so they were left as-is: ",
-            paste(unique(missing), collapse = ", "))
+    message(
+      "prepManualRmds(): ",
+      modName,
+      " references ",
+      length(missing),
+      " image(s) that are not in the module, so they were left as-is: ",
+      paste(unique(missing), collapse = ", ")
+    )
   }
   lines
 }

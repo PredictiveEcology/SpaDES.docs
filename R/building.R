@@ -83,18 +83,23 @@ manualChunkOptions <- function(width = 60) {
 #' ## in build.R, before render_book()
 #' manualVersion()
 #' }
-manualVersion <- function(description = "DESCRIPTION",
-                          envVar = "SPADES_MANUAL_VERSION",
-                          legacy = c("LANDR_MAN_VERSION", "FIRESENSE_VERSION",
-                                     "LANDWEB_VERSION")) {
+manualVersion <- function(
+  description = "DESCRIPTION",
+  envVar = "SPADES_MANUAL_VERSION",
+  legacy = c("LANDR_MAN_VERSION", "FIRESENSE_VERSION", "LANDWEB_VERSION")
+) {
   if (!file.exists(description)) {
     stop("manualVersion(): no DESCRIPTION at '", description, "'.", call. = FALSE)
   }
   version <- read.dcf(description, fields = "Version")[1]
   if (is.na(version) || !nzchar(version)) {
-    stop("manualVersion(): '", description, "' has no Version field, so the ",
-         "manual would be titled, and its PDF archived, without a version.",
-         call. = FALSE)
+    stop(
+      "manualVersion(): '",
+      description,
+      "' has no Version field, so the ",
+      "manual would be titled, and its PDF archived, without a version.",
+      call. = FALSE
+    )
   }
 
   vars <- unique(c(envVar, legacy))
@@ -148,28 +153,32 @@ manualVersion <- function(description = "DESCRIPTION",
 #' }
 renderManual <- function(outputDir = "docs", index = "index.html", ...) {
   if (!requireNamespace("bookdown", quietly = TRUE)) {
-    stop("renderManual() needs the 'bookdown' package to be installed.",
-         call. = FALSE)
+    stop("renderManual() needs the 'bookdown' package to be installed.", call. = FALSE)
   }
 
   indexPath <- file.path(outputDir, index)
   unlink(indexPath)
 
   complete <- TRUE
-  tryCatch(
-    bookdown::render_book(...),
-    error = function(e) {
-      complete <<- FALSE
-      ## ::warning:: is rendered on the run by GitHub Actions and is an ordinary
-      ## line anywhere else, so this is worth emitting unconditionally
-      message("::warning title=Manual render incomplete::",
-              "not every output format rendered: ", conditionMessage(e))
-    }
-  )
+  tryCatch(bookdown::render_book(...), error = function(e) {
+    complete <<- FALSE
+    ## ::warning:: is rendered on the run by GitHub Actions and is an ordinary
+    ## line anywhere else, so this is worth emitting unconditionally
+    message(
+      "::warning title=Manual render incomplete::",
+      "not every output format rendered: ",
+      conditionMessage(e)
+    )
+  })
 
   if (!file.exists(indexPath)) {
-    stop("renderManual(): no '", indexPath, "' was produced, so the site itself ",
-         "failed to render and there is nothing to publish.", call. = FALSE)
+    stop(
+      "renderManual(): no '",
+      indexPath,
+      "' was produced, so the site itself ",
+      "failed to render and there is nothing to publish.",
+      call. = FALSE
+    )
   }
 
   invisible(complete)

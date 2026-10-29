@@ -1,7 +1,10 @@
 test_that("prepManualRmds() strips the YAML header and keeps a thematic rule", {
   localBook("modA")
-  writeModule("modA", "modules",
-              body = c("Text above the rule.", "", "---", "", "Text below the rule."))
+  writeModule(
+    "modA",
+    "modules",
+    body = c("Text above the rule.", "", "---", "", "Text below the rule.")
+  )
 
   out <- prepManualRmds("modules")
   chapter <- readLines(out)
@@ -23,8 +26,12 @@ test_that("prepManualRmds() strips the YAML header and keeps a thematic rule", {
 
 test_that("prepManualRmds() leaves a module with no YAML header alone", {
   localBook("modB")
-  writeModule("modB", "modules", body = c("Only prose.", "", "---", "", "More prose."),
-              header = FALSE)
+  writeModule(
+    "modB",
+    "modules",
+    body = c("Only prose.", "", "---", "", "More prose."),
+    header = FALSE
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
 
@@ -35,7 +42,9 @@ test_that("prepManualRmds() leaves a module with no YAML header alone", {
 
 test_that("prepManualRmds() writes one <module>2.Rmd per module and leaves sources intact", {
   localBook(c("modC", "modD"))
-  for (m in c("modC", "modD")) writeModule(m, "modules", body = "Body.")
+  for (m in c("modC", "modD")) {
+    writeModule(m, "modules", body = "Body.")
+  }
 
   out <- prepManualRmds("modules")
 
@@ -60,8 +69,7 @@ test_that("prepManualRmds() synthesizes a setup chunk when a module has none", {
 
 test_that("prepManualRmds() errors clearly when a module has two setup chunks", {
   localBook("modF")
-  writeModule("modF", "modules",
-              body = c("```{r setup-again, include = FALSE}", "1 + 1", "```"))
+  writeModule("modF", "modules", body = c("```{r setup-again, include = FALSE}", "1 + 1", "```"))
 
   ## was: silently skipped every chunk-option fixup, then warned about a
   ## "numerical expression with 2 elements" and used the first
@@ -70,8 +78,11 @@ test_that("prepManualRmds() errors clearly when a module has two setup chunks", 
 
 test_that("prepManualRmds() copes with more than one References heading", {
   localBook("modG")
-  writeModule("modG", "modules",
-              body = c("## References", "", "Mid-chapter text.", "", "## References"))
+  writeModule(
+    "modG",
+    "modules",
+    body = c("## References", "", "Mid-chapter text.", "", "## References")
+  )
 
   ## was: Error: the condition has length > 1
   chapter <- readLines(prepManualRmds("modules"))
@@ -80,8 +91,11 @@ test_that("prepManualRmds() copes with more than one References heading", {
 
 test_that("prepManualRmds() ignores a 'References' mention that is not a heading", {
   localBook("modH")
-  writeModule("modH", "modules",
-              body = c("See the ## References section below.", "", "## References"))
+  writeModule(
+    "modH",
+    "modules",
+    body = c("See the ## References section below.", "", "## References")
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
   expect_length(grep("See the ## References section below.", chapter, fixed = TRUE), 1)
@@ -90,7 +104,9 @@ test_that("prepManualRmds() ignores a 'References' mention that is not a heading
 test_that("prepManualRmds() de-duplicates text references across chapters", {
   localBook(c("modI", "modJ"))
   refs <- c("(ref:a) alpha", "", "(ref:b) beta", "", "(ref:c) gamma")
-  for (m in c("modI", "modJ")) writeModule(m, "modules", body = c("Body.", "", refs))
+  for (m in c("modI", "modJ")) {
+    writeModule(m, "modules", body = c("Body.", "", refs))
+  }
 
   ## was: Error: missing value where TRUE/FALSE needed -- the loop indexed a
   ## vector that the line above had already shortened
@@ -105,9 +121,16 @@ test_that("prepManualRmds() de-duplicates text references across chapters", {
 test_that("prepManualRmds() does not delete prose that begins with a text reference", {
   localBook(c("modK", "modL"))
   ## a definition (its own paragraph) and a use (mid-paragraph), sharing a key
-  body <- c("(ref:pct) %", "",
-            "Paragraph start,", "(ref:pct) cover data in the study area.", "paragraph end.")
-  for (m in c("modK", "modL")) writeModule(m, "modules", body = body)
+  body <- c(
+    "(ref:pct) %",
+    "",
+    "Paragraph start,",
+    "(ref:pct) cover data in the study area.",
+    "paragraph end."
+  )
+  for (m in c("modK", "modL")) {
+    writeModule(m, "modules", body = body)
+  }
 
   out <- prepManualRmds("modules")
   second <- readLines(grep("modL", out, value = TRUE))
@@ -127,7 +150,9 @@ test_that("prepManualRmds() does not delete prose that begins with a text refere
 
 chunkBody <- function(lines) {
   fences <- grep("^\\s*```", lines)
-  if (length(fences) < 2L) return(character(0))
+  if (length(fences) < 2L) {
+    return(character(0))
+  }
   lines[seq.int(fences[1] + 1L, fences[2] - 1L)]
 }
 
@@ -147,8 +172,10 @@ test_that("the setup chunk parses when the module sets root.dir over several lin
   rmd <- file.path("modules", "modN", "modN.Rmd")
   lines <- readLines(rmd)
   at <- grep("opts_chunk", lines)
-  writeLines(append(lines, c("knitr::opts_knit$set(", "  root.dir = normalizePath('.')", ")"),
-                    after = at), rmd)
+  writeLines(
+    append(lines, c("knitr::opts_knit$set(", "  root.dir = normalizePath('.')", ")"), after = at),
+    rmd
+  )
 
   ## the rewrite closes on the last ")" of the line it matched, so it cannot
   ## handle this. It used to emit an orphaned ")" and break the chunk; now it says so.
@@ -173,8 +200,11 @@ test_that("rebuildCache reaches the generated chapter", {
   localBook("modP")
   ## mentions cache.rebuild only in a comment: the old check looked at the whole
   ## file, found the word, and then injected nothing
-  writeModule("modP", "modules",
-              body = c("Body.", "", "<!-- set cache.rebuild = TRUE when metadata changes -->"))
+  writeModule(
+    "modP",
+    "modules",
+    body = c("Body.", "", "<!-- set cache.rebuild = TRUE when metadata changes -->")
+  )
 
   chapter <- readLines(prepManualRmds("modules", rebuildCache = TRUE))
   ## assert the *injected* call, not the word -- the fixture's own comment
@@ -214,12 +244,13 @@ test_that("prepManualRmds() clears chapters left by a previous run", {
 
 test_that("ignoreModules matches whole module names, not substrings", {
   localBook(c("modR", "modRExtra"))
-  for (m in c("modR", "modRExtra")) writeModule(m, "modules", body = "Body.")
+  for (m in c("modR", "modRExtra")) {
+    writeModule(m, "modules", body = "Body.")
+  }
 
   ## _bookdown.yml still lists modR, so the de-duplication scope narrows and
   ## prepManualRmds() says so
-  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modR"),
-                 "not de-duplicated")
+  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modR"), "not de-duplicated")
   expect_setequal(basename(out), "modRExtra2.Rmd")
 })
 
@@ -235,14 +266,15 @@ test_that("ignoreModules = character(0) ignores nothing", {
 
 test_that("a generated chapter has the expected shape", {
   localBook("modT")
-  writeModule("modT", "modules",
-              body = c("Body text.", "", "(ref:key) a caption", "", "## References"))
+  writeModule(
+    "modT",
+    "modules",
+    body = c("Body text.", "", "(ref:key) a caption", "", "## References")
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
   ## the module path is absolute and machine-specific; everything else is fixed
-  expect_snapshot(
-    cat(sub("root\\.dir = '.*'", "root.dir = '<moduledir>'", chapter), sep = "\n")
-  )
+  expect_snapshot(cat(sub("root\\.dir = '.*'", "root.dir = '<moduledir>'", chapter), sep = "\n"))
 })
 
 ## ---- regressions caught by review of the fixes above ------------------------
@@ -261,7 +293,9 @@ test_that("a text reference directly under an HTML comment is a definition", {
   localBook(c("modV", "modW"))
   ## LandR modules open the list with a comment and no blank line after it
   body <- c("<!-- the following are text references -->", "(ref:pct) %", "", "Body.")
-  for (m in c("modV", "modW")) writeModule(m, "modules", body = body)
+  for (m in c("modV", "modW")) {
+    writeModule(m, "modules", body = body)
+  }
 
   out <- prepManualRmds("modules")
   expect_length(grep("^\\(ref:pct\\)", readLines(grep("modV", out, value = TRUE))), 1)
@@ -271,7 +305,9 @@ test_that("a text reference directly under an HTML comment is a definition", {
 test_that("de-duplication leaves blank lines inside code blocks alone", {
   localBook(c("modX", "modY"))
   body <- c("(ref:dup) shared", "", "```r", "a <- 1", "", "b <- 2", "```")
-  for (m in c("modX", "modY")) writeModule(m, "modules", body = body)
+  for (m in c("modX", "modY")) {
+    writeModule(m, "modules", body = body)
+  }
 
   second <- readLines(grep("modY", prepManualRmds("modules"), value = TRUE))
   ## the last two fences are the ```r block; the first two are the setup chunk
@@ -284,8 +320,11 @@ test_that("de-duplication leaves blank lines inside code blocks alone", {
 
 test_that("a prose mention of root.dir does not derail the rewrite", {
   localBook("modZ")
-  writeModule("modZ", "modules",
-              body = c("Set `root.dir` if you knit this on its own.", "", "Body."))
+  writeModule(
+    "modZ",
+    "modules",
+    body = c("Set `root.dir` if you knit this on its own.", "", "Body.")
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
   expect_length(grep("opts_knit\\$set\\(root\\.dir", chapter), 1)
@@ -298,8 +337,7 @@ test_that("prepManualRmds() warns and returns nothing when no modules match", {
 
   ## every module ignored: used to return a `named list()` -- the wrong type,
   ## silently. See #1.
-  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modAA"),
-                 "no modules to prepare")
+  expect_warning(out <- prepManualRmds("modules", ignoreModules = "modAA"), "no modules to prepare")
   expect_identical(out, character(0))
 })
 
@@ -322,8 +360,10 @@ test_that("prepManualRmds() warns when _bookdown.yml lists no chapters for this 
   ## the case reported in #1: the module exists, but every module line in
   ## _bookdown.yml is commented out. Used to die in the de-duplication pass with
   ## "object 'lineText' not found", after the chapter had already been written.
-  writeLines(c("book_filename: t", "rmd_files:", "  - index.Rmd",
-               "  # - _manual_rmds/modAC2.Rmd"), "_bookdown.yml")
+  writeLines(
+    c("book_filename: t", "rmd_files:", "  - index.Rmd", "  # - _manual_rmds/modAC2.Rmd"),
+    "_bookdown.yml"
+  )
 
   expect_warning(out <- prepManualRmds("modules"), "lists no chapters")
   expect_setequal(basename(out), "modAC2.Rmd")
@@ -331,7 +371,7 @@ test_that("prepManualRmds() warns when _bookdown.yml lists no chapters for this 
 })
 
 test_that("prepManualRmds() warns when a prepared chapter is not listed in _bookdown.yml", {
-  localBook("modAG")  ## lists modAG2.Rmd only
+  localBook("modAG") ## lists modAG2.Rmd only
   writeModule("modAG", "modules", body = "Body.")
   writeModule("modAH", "modules", body = "Body.")
 
@@ -356,8 +396,10 @@ test_that("prepManualRmds() reads _bookdown.yml as YAML, not by indentation", {
   localBook("modAD")
   writeModule("modAD", "modules", body = c("(ref:k) shared", "", "Body."))
   ## four-space indent: the old sub("  - ", ...) matched exactly two
-  writeLines(c("book_filename: t", "rmd_files:", "    - index.Rmd",
-               "    - _manual_rmds/modAD2.Rmd"), "_bookdown.yml")
+  writeLines(
+    c("book_filename: t", "rmd_files:", "    - index.Rmd", "    - _manual_rmds/modAD2.Rmd"),
+    "_bookdown.yml"
+  )
 
   expect_no_warning(out <- prepManualRmds("modules"))
   expect_setequal(basename(out), "modAD2.Rmd")
@@ -366,8 +408,10 @@ test_that("prepManualRmds() reads _bookdown.yml as YAML, not by indentation", {
 test_that("prepManualRmds() reads the flow-style rmd_files form", {
   localBook("modAE")
   writeModule("modAE", "modules", body = "Body.")
-  writeLines(c("book_filename: t",
-               'rmd_files: ["index.Rmd", "_manual_rmds/modAE2.Rmd"]'), "_bookdown.yml")
+  writeLines(
+    c("book_filename: t", 'rmd_files: ["index.Rmd", "_manual_rmds/modAE2.Rmd"]'),
+    "_bookdown.yml"
+  )
 
   expect_no_warning(out <- prepManualRmds("modules"))
   expect_setequal(basename(out), "modAE2.Rmd")
@@ -386,10 +430,15 @@ test_that("prepManualRmds() checks for _bookdown.yml before writing anything", {
 
 test_that("prepManualRmds() rewrites relative image paths so they resolve from the book root", {
   localBook("modImg")
-  writeModule("modImg", "modules",
-              body = c("[![made-with-Markdown](figures/markdownBadge.png)](https://commonmark.org)",
-                       "",
-                       "![A schematic](figures/schematic.png)"))
+  writeModule(
+    "modImg",
+    "modules",
+    body = c(
+      "[![made-with-Markdown](figures/markdownBadge.png)](https://commonmark.org)",
+      "",
+      "![A schematic](figures/schematic.png)"
+    )
+  )
   figs <- file.path("modules", "modImg", "figures")
   dir.create(figs, recursive = TRUE)
   file.create(file.path(figs, c("markdownBadge.png", "schematic.png")))
@@ -413,8 +462,7 @@ test_that("prepManualRmds() rewrites relative image paths so they resolve from t
   ## path that resolves from its own directory, which is where it is knitted
   ## from on its own.
   source <- readLines(file.path("modules", "modImg", "modImg.Rmd"))
-  expect_identical(imagePaths(source),
-                   c("figures/markdownBadge.png", "figures/schematic.png"))
+  expect_identical(imagePaths(source), c("figures/markdownBadge.png", "figures/schematic.png"))
   withr::with_dir(file.path("modules", "modImg"), {
     expect_true(all(file.exists(imagePaths(source))))
   })
@@ -422,14 +470,19 @@ test_that("prepManualRmds() rewrites relative image paths so they resolve from t
 
 test_that("prepManualRmds() leaves image paths it must not rewrite alone", {
   localBook("modKeep")
-  writeModule("modKeep", "modules",
-              body = c("![remote](https://example.org/badge.png)",
-                       "",
-                       "![absolute](/tmp/already-absolute.png)",
-                       "",
-                       "```{r chunk-modKeep, eval = FALSE}",
-                       'knitr::include_graphics("figures/inside-a-chunk.png")',
-                       "```"))
+  writeModule(
+    "modKeep",
+    "modules",
+    body = c(
+      "![remote](https://example.org/badge.png)",
+      "",
+      "![absolute](/tmp/already-absolute.png)",
+      "",
+      "```{r chunk-modKeep, eval = FALSE}",
+      'knitr::include_graphics("figures/inside-a-chunk.png")',
+      "```"
+    )
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
 
@@ -453,27 +506,34 @@ test_that("prepManualRmds() tells stageFigure() where the chapter's figures go",
   line <- grep("SpaDES.docs.stageDir", chapter, fixed = TRUE)
   expect_length(line, 1L)
   expect_match(chapter[line], "SpaDES.docs.stageDir = '_manual_rmds/modStage'", fixed = TRUE)
-  expect_true(line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1)
+  expect_true(
+    line > setup && line < setup + which(grepl("^```\\s*$", chapter[-seq_len(setup)]))[1] + 1
+  )
 })
 
 test_that("prepManualRmds() turns caching off for chunks that stage figures", {
   localBook("modCache")
-  writeModule("modCache", "modules", body = c(
-    "```{r fig-staged, fig.cap = 'a figure'}",
-    'SpaDES.docs::includeFigure("figures/x.png")',
-    "```",
-    "",
-    "```{r badge-staged, results = 'asis', cache = TRUE}",
-    'cat(SpaDES.docs::stageFigure("figures/b.png"))',
-    "```",
-    "",
-    "```{r unrelated, cache = TRUE}",
-    "1 + 1",
-    "```",
-    "",
-    "```{r already-off, cache = FALSE}",
-    'SpaDES.docs::includeFigure("figures/y.png")',
-    "```"))
+  writeModule(
+    "modCache",
+    "modules",
+    body = c(
+      "```{r fig-staged, fig.cap = 'a figure'}",
+      'SpaDES.docs::includeFigure("figures/x.png")',
+      "```",
+      "",
+      "```{r badge-staged, results = 'asis', cache = TRUE}",
+      'cat(SpaDES.docs::stageFigure("figures/b.png"))',
+      "```",
+      "",
+      "```{r unrelated, cache = TRUE}",
+      "1 + 1",
+      "```",
+      "",
+      "```{r already-off, cache = FALSE}",
+      'SpaDES.docs::includeFigure("figures/y.png")',
+      "```"
+    )
+  )
 
   chapter <- readLines(prepManualRmds("modules"))
 
@@ -482,25 +542,38 @@ test_that("prepManualRmds() turns caching off for chunks that stage figures", {
   ## was never staged. These chunks are trivial, so there is nothing to lose.
   expect_match(grep("^```\\{r fig-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
   expect_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = FALSE", fixed = TRUE)
-  expect_no_match(grep("^```\\{r badge-staged", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
+  expect_no_match(
+    grep("^```\\{r badge-staged", chapter, value = TRUE),
+    "cache = TRUE",
+    fixed = TRUE
+  )
   ## and nothing else is touched
   expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
   ## a header that already says so is left exactly as it was, not given a second
   ## `cache = FALSE`
-  expect_identical(grep("^```\\{r already-off", chapter, value = TRUE),
-                   "```{r already-off, cache = FALSE}")
+  expect_identical(
+    grep("^```\\{r already-off", chapter, value = TRUE),
+    "```{r already-off, cache = FALSE}"
+  )
 })
 
 test_that("prepManualRmds() leaves an image the module does not hold, and says so", {
   localBook("modMiss")
-  writeModule("modMiss", "modules",
-              body = c("![fetched at render time](figures/not-yet-downloaded.png)",
-                       "",
-                       "A stray ![ that never closes, which must not trip the rewrite."))
+  writeModule(
+    "modMiss",
+    "modules",
+    body = c(
+      "![fetched at render time](figures/not-yet-downloaded.png)",
+      "",
+      "A stray ![ that never closes, which must not trip the rewrite."
+    )
+  )
 
-  expect_message(chapter <- readLines(prepManualRmds("modules")),
-                 "not in the module, so they were left as-is: figures/not-yet-downloaded.png",
-                 fixed = TRUE)
+  expect_message(
+    chapter <- readLines(prepManualRmds("modules")),
+    "not in the module, so they were left as-is: figures/not-yet-downloaded.png",
+    fixed = TRUE
+  )
   ## guessing a destination would only move the broken link
   expect_length(grep("](figures/not-yet-downloaded.png)", chapter, fixed = TRUE), 1)
   expect_length(grep("A stray ![ that never closes", chapter, fixed = TRUE), 1)

@@ -1,8 +1,15 @@
 localBookRoot <- function(outputDir = "docs", envir = parent.frame()) {
   d <- withr::local_tempdir(.local_envir = envir)
   withr::local_dir(d, .local_envir = envir)
-  writeLines(c("book_filename: test", paste0('output_dir: "', outputDir, '"'),
-               "rmd_files:", "  - index.Rmd"), "_bookdown.yml")
+  writeLines(
+    c(
+      "book_filename: test",
+      paste0('output_dir: "', outputDir, '"'),
+      "rmd_files:",
+      "  - index.Rmd"
+    ),
+    "_bookdown.yml"
+  )
   invisible(d)
 }
 
@@ -23,12 +30,14 @@ test_that("manualPaths(create = FALSE) creates nothing", {
 })
 
 test_that("manualPaths() errors when there is no _bookdown.yml", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   expect_error(manualPaths(prjDir = "."), "no '_bookdown.yml'")
 })
 
 test_that("manualPaths() errors when _bookdown.yml sets no output_dir", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   writeLines(c("book_filename: test", "rmd_files:", "  - index.Rmd"), "_bookdown.yml")
   ## silently defaulting here would render the book somewhere the deploy does not look
   expect_error(manualPaths(prjDir = "."), "does not set `output_dir`")
@@ -40,8 +49,7 @@ test_that("manualPaths() finds the project root when prjDir is not given", {
   ## a git root is one of the markers rprojroot is asked for
   dir.create(".git")
   p <- manualPaths()
-  expect_identical(normalizePath(p$prj, winslash = "/"),
-                   normalizePath(getwd(), winslash = "/"))
+  expect_identical(normalizePath(p$prj, winslash = "/"), normalizePath(getwd(), winslash = "/"))
 })
 
 test_that("manualPaths() errors when prjDir does not exist", {
