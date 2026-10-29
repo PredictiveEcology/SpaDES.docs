@@ -48,6 +48,23 @@ test_that("archiveManualPDF() copies to a versioned name", {
   expect_identical(basename(out), "LandR-manual-v1.0.4.pdf")
 })
 
+test_that("archiveManualPDF() leaves an already archived version alone", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  dir.create("docs")
+
+  writeLines("the release", "docs/Manual.pdf")
+  out <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual")
+
+  ## a later build at the same version: a PDF is never byte-identical across
+  ## runs, so this stands in for the new creation date xelatex stamps in
+  writeLines("a rebuild of the same version", "docs/Manual.pdf")
+  expect_message(again <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
+                 "already archived")
+
+  expect_identical(again, out)
+  expect_identical(readLines(out), "the release")
+})
+
 test_that("archiveManualPDF() refuses an empty version", {
   d <- withr::local_tempdir(); withr::local_dir(d)
   dir.create("docs"); writeLines("x", "docs/Manual.pdf")

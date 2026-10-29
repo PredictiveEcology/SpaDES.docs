@@ -48,6 +48,19 @@ stagePagesFiles <- function(path, cname = NULL) {
 #' produced, which is the usual case while a manual renders HTML only -- copying
 #' unconditionally silently succeeds with `FALSE` and leaves an empty archive.
 #'
+#' @details
+#' An archived version is never overwritten. A release PDF is a record of what
+#' that version looked like, so the first copy is the one that counts, and a
+#' later build at the same version leaves it alone.
+#'
+#' That is also the only workable test. A PDF is not reproducible byte for byte:
+#' xelatex stamps a creation date and a document ID into every run, so the same
+#' sources archive differently each time. A caller that commits whatever changed
+#' under `archiveDir` therefore saw a modified file after every build, and
+#' overwriting made a release PDF depend on which build touched it last. Keyed
+#' on the file's existence, archiving happens once per version, which is what a
+#' release means.
+#'
 #' @param pdf path to the rendered PDF.
 #'
 #' @param version version string for the archived file name.
@@ -57,8 +70,8 @@ stagePagesFiles <- function(path, cname = NULL) {
 #'
 #' @param archiveDir directory to copy into, created if needed.
 #'
-#' @return path of the archived copy, or `NULL` if there was no PDF to archive,
-#'  invisibly.
+#' @return path of the archived copy, whether this call wrote it or found it
+#'  already there, or `NULL` if there was no PDF to archive, invisibly.
 #'
 #' @export
 #' @importFrom Require checkPath
@@ -71,9 +84,18 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
     stop("archiveManualPDF(): `version` is empty, so the archived file would ",
          "not be identifiable.", call. = FALSE)
   }
-  archiveDir <- checkPath(archiveDir, create = TRUE)
+  ## normalised because checkPath() returns the path as given when it creates the
+  ## directory and an absolute one when it was already there, so without this the
+  ## first build of a manual and every later one disagree about what was archived
+  archiveDir <- normalizePath(checkPath(archiveDir, create = TRUE),
+                              winslash = "/", mustWork = FALSE)
   dest <- file.path(archiveDir, paste0(prefix, "-v", version, ".pdf"))
-  file.copy(from = pdf, to = dest, overwrite = TRUE)
+  if (file.exists(dest)) {
+    message("archiveManualPDF(): v", version, " is already archived as '",
+            basename(dest), "'; left as it is.")
+    return(invisible(dest))
+  }
+  file.copy(from = pdf, to = dest)
   message("archiveManualPDF(): archived '", basename(dest), "' to '", archiveDir, "'.")
   invisible(dest)
 }
