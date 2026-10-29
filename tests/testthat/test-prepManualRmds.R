@@ -610,3 +610,117 @@ test_that("prepManualRmds() leaves an image the module does not hold, and says s
   expect_length(grep("](figures/not-yet-downloaded.png)", chapter, fixed = TRUE), 1)
   expect_length(grep("A stray ![ that never closes", chapter, fixed = TRUE), 1)
 })
+
+test_that("prepManualRmds() rewrites a cache.rebuild the module already sets", {
+  localBook("modCache")
+  dir.create(file.path("modules", "modCache"), recursive = TRUE)
+  ## a module that sets it itself, which must follow `rebuildCache` rather than
+  ## keep its own value -- otherwise the manual cannot force a rebuild
+  writeLines(c(
+    "# modCache Module",
+    "",
+    "```{r setup-modCache, include = FALSE}",
+    "knitr::opts_chunk$set(echo = TRUE, cache.rebuild = FALSE)",
+    "```"
+  ), file.path("modules", "modCache", "modCache.Rmd"))
+
+  out <- prepManualRmds("modules", rebuildCache = TRUE)
+  staged <- readLines(out)
+
+  expect_length(grep("cache.rebuild = TRUE", staged, fixed = TRUE), 1)
+  expect_length(grep("cache.rebuild = FALSE", staged, fixed = TRUE), 0)
+})
+
+test_that("prepManualRmds() skips a directory that is not a module", {
+  localBook("modReal")
+  writeModule("modReal", "modules", body = "Some prose.")
+  ## a retired module, or a cache directory: present under modules/ with no
+  ## <name>.Rmd, and not a reason to fail the build
+  dir.create(file.path("modules", "notAModule", "R"), recursive = TRUE)
+  writeLines("x <- 1", file.path("modules", "notAModule", "R", "helper.R"))
+
+  expect_message(out <- prepManualRmds("modules"), "no <name>.Rmd")
+
+  expect_length(out, 1L)
+  expect_match(basename(out), "^modReal2[.]Rmd$")
+})
+
+test_that("textRefMisreads() finds nothing in a chapter with no text references", {
+  expect_length(textRefMisreads(c("# A Module", "", "Plain prose.")), 0L)
+  expect_length(textRefMisreads(character(0)), 0L)
+})
+
+test_that("prepManualRmds() turns a module's eval = FALSE into TRUE", {
+  localBook("modEval")
+  dir.create(file.path("modules", "modEval"), recursive = TRUE)
+  ## a module may switch evaluation off for standalone knitting; the book needs
+  ## the chunks to run, or the chapter documents nothing
+  writeLines(c(
+    "# modEval Module",
+    "",
+    "```{r setup-modEval, include = FALSE, eval = FALSE}",
+    "knitr::opts_chunk$set(echo = TRUE)",
+    "```"
+  ), file.path("modules", "modEval", "modEval.Rmd"))
+
+  staged <- readLines(prepManualRmds("modules"))
+
+  expect_length(grep("eval = TRUE", staged, fixed = TRUE), 1)
+  expect_length(grep("eval = FALSE", staged, fixed = TRUE), 0)
+})
+
+test_that("prepManualRmds() repoints a root.dir the module already sets", {
+  localBook("modRoot")
+  dir.create(file.path("modules", "modRoot"), recursive = TRUE)
+  ## the module's own value points somewhere that does not exist once the
+  ## chapter is read from the book root
+  writeLines(c(
+    "# modRoot Module",
+    "",
+    "```{r setup-modRoot, include = FALSE}",
+    "knitr::opts_knit$set(root.dir = \"somewhere/else\")",
+    "```"
+  ), file.path("modules", "modRoot", "modRoot.Rmd"))
+
+  staged <- readLines(prepManualRmds("modules"))
+
+  expect_length(grep("somewhere/else", staged, fixed = TRUE), 0)
+  expect_length(grep("modules/modRoot", staged, fixed = TRUE), 1)
+})
+
+test_that("prepManualRmds() refuses a setup chunk that sets root.dir twice", {
+  localBook("modTwice")
+  dir.create(file.path("modules", "modTwice"), recursive = TRUE)
+  ## which of the two to rewrite is not knowable, and picking one silently
+  ## would point the chapter at the wrong directory
+  writeLines(c(
+    "# modTwice Module",
+    "",
+    "```{r setup-modTwice, include = FALSE}",
+    "knitr::opts_knit$set(root.dir = \"a\")",
+    "knitr::opts_knit$set(root.dir = \"b\")",
+    "```"
+  ), file.path("modules", "modTwice", "modTwice.Rmd"))
+
+  expect_snapshot(error = TRUE, prepManualRmds("modules"))
+})
+
+test_that("prepManualRmds() moves a References heading to the end of the chapter", {
+  localBook("modRefs")
+  writeModule("modRefs", "modules", body = c(
+    "## References",
+    "",
+    "A citation list belongs after the prose.",
+    "",
+    "## Parameters",
+    "",
+    "Described after References in the module's own file."
+  ))
+
+  staged <- readLines(prepManualRmds("modules"))
+  refs <- grep("^## References", staged)
+  params <- grep("^## Parameters", staged)
+
+  expect_length(refs, 1)
+  expect_gt(refs, params)
+})

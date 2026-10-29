@@ -31,3 +31,13 @@
       ## References
       \printbibliography[segment=\therefsegment,heading=none]
 
+# prepManualRmds() refuses a setup chunk that sets root.dir twice
+
+    Code
+      prepManualRmds("modules")
+    Message
+      Copying module modTwice ...
+    Condition
+      Error in `FUN()`:
+      ! prepManualRmds(): modTwice sets root.dir more than once in its setup chunk
+

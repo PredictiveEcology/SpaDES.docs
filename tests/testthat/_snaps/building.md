@@ -30,3 +30,11 @@
       Error:
       ! renderManual(): no 'docs/index.html' was produced, so the site itself failed to render and there is nothing to publish.
 
+# renderManual() says which package is missing
+
+    Code
+      renderManual(outputDir = "docs")
+    Condition
+      Error:
+      ! renderManual() needs the 'bookdown' package to be installed.
+

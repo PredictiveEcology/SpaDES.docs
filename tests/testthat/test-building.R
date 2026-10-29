@@ -106,3 +106,24 @@ test_that("renderManual() reports success when every format rendered", {
 
   expect_true(renderManual(outputDir = "docs"))
 })
+
+test_that("manualChunkOptions() asks for latex tables when rendering to PDF", {
+  withr::local_options(width = 80)
+  old <- knitr::opts_chunk$get()
+  withr::defer(knitr::opts_chunk$set(old))
+  ## the reason knitr.table.format is a function: the same chapter is rendered
+  ## to both formats from one knit, so a fixed value is wrong for one of them
+  local_mocked_bindings(is_latex_output = function(...) TRUE, .package = "knitr")
+
+  manualChunkOptions()
+
+  expect_identical(getOption("knitr.table.format")(), "latex")
+})
+
+test_that("renderManual() says which package is missing", {
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  local_mocked_bindings(requireNamespace = function(...) FALSE, .package = "base")
+
+  expect_snapshot(error = TRUE, renderManual(outputDir = "docs"))
+})

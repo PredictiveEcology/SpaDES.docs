@@ -212,3 +212,23 @@ test_that("manualArchiveLinks() returns nothing when there is no archive", {
 
   expect_length(manualArchiveLinks(manualName = "Test manual"), 0L)
 })
+
+test_that("manualArchiveLinks() is empty when the only archive is the version being built", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  ## a manual's first release: the one archived PDF is the current version, so
+  ## there are no *previous* versions to list
+  makeArchive("archive/pdf", "1.0.0")
+
+  expect_length(manualArchiveLinks(manualName = "Test manual", exclude = "1.0.0"), 0L)
+})
+
+test_that("manualArchiveLinks() takes the version to exclude from the environment", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.1.0"))
+  withr::local_envvar(SPADES_MANUAL_VERSION = "1.1.0")
+
+  links <- manualArchiveLinks(manualName = "Test manual")
+
+  expect_length(links, 1L)
+  expect_match(links, "v1.0.0", fixed = TRUE)
+})
