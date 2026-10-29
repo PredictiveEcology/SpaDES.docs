@@ -145,3 +145,32 @@ test_that("publishManualArchive() reports how many it published", {
   expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"),
                  "newest v1\\.0\\.10")
 })
+
+test_that("manualArchiveLinks() lists the archived versions newest first", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
+
+  links <- manualArchiveLinks(manualName = "Test manual", exclude = NULL)
+
+  expect_identical(links, c(
+    "-   [Test manual v1.0.10](archive/pdf/Test-manual-v1.0.10.pdf)\n",
+    "-   [Test manual v1.0.2](archive/pdf/Test-manual-v1.0.2.pdf)\n",
+    "-   [Test manual v1.0.0](archive/pdf/Test-manual-v1.0.0.pdf)\n"
+  ))
+})
+
+test_that("manualArchiveLinks() leaves out the version being built", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.3", "1.0.4"))
+
+  links <- manualArchiveLinks(manualName = "Test manual", exclude = "1.0.4")
+
+  expect_length(links, 1L)
+  expect_match(links, "v1.0.3", fixed = TRUE)
+})
+
+test_that("manualArchiveLinks() returns nothing when there is no archive", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+
+  expect_length(manualArchiveLinks(manualName = "Test manual"), 0L)
+})

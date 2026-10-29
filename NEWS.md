@@ -1,5 +1,35 @@
 # SpaDES.docs (development version)
 
+Machinery that each of the three manuals had its own copy of is now shared, so a
+fix reaches all of them. The duplicates had already drifted: one manual's chapter
+options set a CRAN repository, overriding the one CI configures, and one removed
+dot-prefixed objects that its own build script had named with a dot so they would
+survive knitting.
+
+* `manualArchiveLinks()` returns the "previous versions" list for a manual's
+  landing page as markdown, built from the files present. It shares its listing
+  with `publishManualArchive()`, which writes the same versions as a page. The
+  links point at the copies the site publishes rather than a repository's raw
+  files, which stop working if it is renamed or made private.
+
+* `manualChunkOptions()` sets the options and chunk options every manual chapter
+  is built with, replacing a near-identical `before_chapter_script` in each
+  manual.
+
+* `manualVersion()` reads `Version` from a manual's DESCRIPTION, by field, and
+  puts it where `index.Rmd`'s title page can reach it. Reading positionally is
+  what this replaces: `read.dcf(...)[4]` was `Version` only because it happened
+  to be the fourth field.
+
+* `renderManual()` renders every declared format and keeps the site when another
+  format fails. bookdown knits once and writes the formats in turn, so the
+  website is already on disk when a later one fails; letting that propagate threw
+  away a rendered book and skipped the deploy, which left the LandR manual's
+  published site unchanged for 38 days. The failure is reported as a GitHub
+  Actions warning instead, and only a missing site is an error.
+
+# SpaDES.docs 0.5.1
+
 * `archiveManualPDF()` no longer overwrites a version that is already archived.
   A release PDF records what that version looked like, so the first copy is the
   one that counts. Overwriting also made the archive churn on every build: a PDF

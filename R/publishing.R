@@ -123,6 +123,9 @@ archiveManualPDF <- function(pdf, version, prefix, archiveDir = file.path("archi
 #' @param manualName name of the manual, used in the index page's headings and
 #'  link text.
 #'
+#' @seealso [manualArchiveLinks()] to list the same versions inline, in a
+#'  chapter.
+#'
 #' @param subdir directory within `docsDir` to publish into.
 #'
 #' @return path to the index page, invisibly, or `NULL` if there was nothing to
@@ -147,13 +150,9 @@ publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
   outDir <- checkPath(file.path(docsDir, subdir, "pdf"), create = TRUE)
   file.copy(pdfs, outDir, overwrite = TRUE)
 
-  nms <- basename(pdfs)
-  vers <- sub("^.*-v(.*)[.]pdf$", "\\1", nms)
-  ## newest first; anything that is not a version sorts last rather than erroring
-  ord <- order(numeric_version(vers, strict = FALSE), decreasing = TRUE,
-               na.last = TRUE)
-  nms <- nms[ord]
-  vers <- vers[ord]
+  archived <- archivedPDFs(archiveDir)
+  nms <- archived$file
+  vers <- archived$version
   sizes <- file.size(file.path(outDir, nms)) / 1048576
 
   index <- file.path(docsDir, subdir, "index.html")
@@ -175,4 +174,74 @@ publishManualArchive <- function(archiveDir = file.path("archive", "pdf"),
   message("publishManualArchive(): published ", length(nms), " archived PDF(s) to '",
           file.path(subdir, "pdf"), "', newest v", vers[1], ".")
   invisible(index)
+}
+
+## The archived PDFs, newest first. Shared by publishManualArchive(), which
+## writes a page of them, and manualArchiveLinks(), which returns them as
+## markdown -- two presentations of one list, which had been implemented twice.
+archivedPDFs <- function(archiveDir) {
+  if (!dir.exists(archiveDir)) {
+    return(data.frame(file = character(0), version = character(0)))
+  }
+  files <- basename(list.files(archiveDir, pattern = "[.]pdf$"))
+  versions <- sub("^.*-v(.*)[.]pdf$", "\\1", files)
+  ## newest first. strict = FALSE so a file that is not named for a version
+  ## sorts last rather than taking the whole build down
+  ord <- order(numeric_version(versions, strict = FALSE), decreasing = TRUE,
+               na.last = TRUE)
+  data.frame(file = files[ord], version = versions[ord])
+}
+
+#' Markdown links to a manual's archived versions
+#'
+#' The "previous versions" list for a manual's landing page, built from the
+#' files actually present rather than maintained by hand.
+#'
+#' @details
+#' Every hand-maintained version of this list had drifted by the time it was
+#' replaced: one manual's `index.Rmd` still named three releases in commented-out
+#' markdown, and two listed versions whose files had moved.
+#'
+#' The links are relative to the published book, where [publishManualArchive()]
+#' has copied the PDFs, rather than absolute URLs into the repository. A link to
+#' a repository's raw files stops working if it is renamed or made private, and
+#' sends a reader off the site to fetch a file the site is already serving.
+#'
+#' @param archiveDir directory holding the archived PDFs.
+#'
+#' @param manualName name of the manual, used in the link text.
+#'
+#' @param exclude version to leave out, normally the one being built: it is the
+#'  current version, not a previous one. `NULL` or `""` keeps all of them.
+#'
+#' @param urlPrefix path the links are relative to, i.e. where
+#'  [publishManualArchive()] publishes the PDFs within the book.
+#'
+#' @return a character vector of markdown list items, one per version, newest
+#'  first. Empty if there is nothing archived.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## in index.Rmd, in a `results = "asis"` chunk:
+#' cat(manualArchiveLinks(manualName = "LandR Manual"), sep = "")
+#' }
+manualArchiveLinks <- function(archiveDir = file.path("archive", "pdf"),
+                               manualName,
+                               exclude = Sys.getenv("SPADES_MANUAL_VERSION"),
+                               urlPrefix = file.path("archive", "pdf")) {
+  archived <- archivedPDFs(archiveDir)
+  if (!nrow(archived)) {
+    return(character(0))
+  }
+  if (length(exclude) && nzchar(exclude)) {
+    archived <- archived[archived$version != exclude, , drop = FALSE]
+  }
+  if (!nrow(archived)) {
+    return(character(0))
+  }
+
+  paste0("-   [", manualName, " v", archived$version, "](",
+         file.path(urlPrefix, archived$file), ")\n")
 }
