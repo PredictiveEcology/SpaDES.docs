@@ -1,5 +1,19 @@
 # Changelog
 
+## SpaDES.docs (development version)
+
+- [`archiveManualPDF()`](https://predictiveecology.github.io/SpaDES.docs/reference/archiveManualPDF.md)
+  no longer overwrites a version that is already archived. A release PDF
+  records what that version looked like, so the first copy is the one
+  that counts. Overwriting also made the archive churn on every build: a
+  PDF is not reproducible byte for byte, because xelatex stamps a
+  creation date and a document ID into each run, so a caller that
+  commits whatever changed under `archiveDir` saw a modified file every
+  time. The LandR manual opened a fresh pull request archiving the same
+  v1.0.4 on three consecutive builds before this was found. Keyed on the
+  file’s existence instead, archiving happens once per version, which is
+  what a release means.
+
 ## SpaDES.docs 0.5.0
 
 - [`stageFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/stageFigure.md)

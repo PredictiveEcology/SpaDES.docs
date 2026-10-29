@@ -37,5 +37,19 @@ archiveManualPDF(
 
 ## Value
 
-path of the archived copy, or `NULL` if there was no PDF to archive,
-invisibly.
+path of the archived copy, whether this call wrote it or found it
+already there, or `NULL` if there was no PDF to archive, invisibly.
+
+## Details
+
+An archived version is never overwritten. A release PDF is a record of
+what that version looked like, so the first copy is the one that counts,
+and a later build at the same version leaves it alone.
+
+That is also the only workable test. A PDF is not reproducible byte for
+byte: xelatex stamps a creation date and a document ID into every run,
+so the same sources archive differently each time. A caller that commits
+whatever changed under `archiveDir` therefore saw a modified file after
+every build, and overwriting made a release PDF depend on which build
+touched it last. Keyed on the file's existence, archiving happens once
+per version, which is what a release means.

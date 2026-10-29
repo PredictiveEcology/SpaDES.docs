@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,9 +34,14 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.5.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="spadesdocs-development-version">SpaDES.docs (development version)<a class="anchor" aria-label="anchor" href="#spadesdocs-development-version"></a></h2>
+<ul><li>
+<code><a href="../reference/archiveManualPDF.html">archiveManualPDF()</a></code> no longer overwrites a version that is already archived. A release PDF records what that version looked like, so the first copy is the one that counts. Overwriting also made the archive churn on every build: a PDF is not reproducible byte for byte, because xelatex stamps a creation date and a document ID into each run, so a caller that commits whatever changed under <code>archiveDir</code> saw a modified file every time. The LandR manual opened a fresh pull request archiving the same v1.0.4 on three consecutive builds before this was found. Keyed on the file’s existence instead, archiving happens once per version, which is what a release means.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="spadesdocs-050">SpaDES.docs 0.5.0<a class="anchor" aria-label="anchor" href="#spadesdocs-050"></a></h2>
 <ul><li><p><code><a href="../reference/stageFigure.html">stageFigure()</a></code> gives a figure or badge chunk a path that works both when the module renders on its own and when its chapter is staged into a manual. It replaces <code>normPath()</code>, which produces a path correct only on the machine that built the book: the published LandR manual currently serves <code>src="/home/runner/work/.../figures/..."</code> from every module chapter, a dead link for every reader, with the build green throughout. Standalone, the path comes back unchanged. Staged, the figure is copied into a directory of the module’s own beside the chapter – the one <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> copies the chapter’s prose images into – and the relative path to that copy is returned, so it is published with the book. Per module because modules reuse file names: every one writes <code>figures/moduleVersionBadge.png</code>, and a shared directory showed each chapter the badge of the module knitted last. <code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> marks a staged chapter by setting the knitr option <code>SpaDES.docs.stageDir</code> in its setup chunk. Accepts a vector, as <code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">knitr::include_graphics()</a></code> does. A figure fetched at render time is handled the same way – write it into the module’s <code>figures/</code> as usual, then pass it through.</p></li>

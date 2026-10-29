@@ -11,7 +11,7 @@ unconditionally silently succeeds with FALSE and leaves an empty archive."></hea
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ unconditionally silently succeeds with FALSE and leaves an empty archive."></hea
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Archive a rendered manual PDF alongside the book</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.5.0/R/publishing.R" class="external-link"><code>R/publishing.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/R/publishing.R" class="external-link"><code>R/publishing.R</code></a></small>
       <div class="d-none name"><code>archiveManualPDF.Rd</code></div>
     </div>
 
@@ -81,8 +81,21 @@ unconditionally silently succeeds with <code>FALSE</code> and leaves an empty ar
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>path of the archived copy, or <code>NULL</code> if there was no PDF to archive,
-invisibly.</p>
+    <p>path of the archived copy, whether this call wrote it or found it
+already there, or <code>NULL</code> if there was no PDF to archive, invisibly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>An archived version is never overwritten. A release PDF is a record of what
+that version looked like, so the first copy is the one that counts, and a
+later build at the same version leaves it alone.</p>
+<p>That is also the only workable test. A PDF is not reproducible byte for byte:
+xelatex stamps a creation date and a document ID into every run, so the same
+sources archive differently each time. A caller that commits whatever changed
+under <code>archiveDir</code> therefore saw a modified file after every build, and
+overwriting made a release PDF depend on which build touched it last. Keyed
+on the file's existence, archiving happens once per version, which is what a
+release means.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
