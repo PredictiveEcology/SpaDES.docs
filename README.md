@@ -25,15 +25,20 @@ library(SpaDES.docs)
 chapters <- prepManualRmds(modulePath = "../modules")
 ```
 
-See [**Building a project manual**](https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.html) for the whole workflow: the directory layout, a runnable example, what `prepManualRmds()` does to each module `.Rmd` and why, the build-script pattern, and the things that bite.
+See [**Building a project manual**](https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.html) for the whole workflow: the directory layout, a runnable example, what `prepManualRmds()` does to each module `.Rmd` and why, the build-script pattern, and the constraints to work within.
 
 ## Manuals built with it
 
-| | |
-|---|---|
-| [LandWeb](https://github.com/PredictiveEcology/LandWeb) | the reference implementation. `manual/` inside an active project, rendered to `docs/`. Start here |
-| [fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual) | the variant where the manual is its own repository rather than a directory inside a project |
-| [LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual) | the oldest of the three, and not currently maintained; useful as a reference, not as a template |
+Which one to copy follows from what the manual is for. A **project manual** pins
+its modules, so it and the results it describes agree; a **continuously updated**
+manual tracks them, so a documentation fix reaches the site without anyone
+republishing. Almost everything else follows from that choice.
+
+| | | formats |
+|---|---|---|
+| [LandWeb](https://github.com/PredictiveEcology/LandWeb) | a project manual: `manual/` inside an active project, modules pinned as git submodules. See `vignette("building-a-project-manual")` | HTML, PDF, EPUB |
+| [LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual) | continuously updated, and the fullest example: its own repository, modules checked out by the workflow at one `MODULE_REF`, a PDF archived per release and published with the site, custom domain | HTML, PDF, EPUB |
+| [fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual) | the same arrangement as LandR-Manual, without the release machinery. See `vignette("building-a-continuously-updated-manual")` for both | HTML |
 
 ## Installation
 

@@ -76,9 +76,16 @@ jobs:
 Use `github.event.inputs`, not the `inputs` context, so the expression is `null`
 rather than an error on `push` and `schedule` events.
 
-A module whose branches differ from the rest overrides the default in its own
-step. This is not hypothetical: `Biomass_validationKNN`'s `main` is ahead of its
-`development`, the opposite of the other LandR modules.
+A module whose branches differ from the rest can override the default in its own
+step -- but prefer fixing the module. `Biomass_validationKNN` was checked out at
+`main` for a year because work there had resumed directly on `main`, leaving its
+`development` 12 commits behind; the exception then had to be remembered every
+time `MODULE_REF` was considered. Merging `main` back into `development` let the
+exception go, and `MODULE_REF` covers every module again.
+
+Nothing detects the situation that made the exception necessary: a module whose
+`development` has quietly fallen behind its `main` builds perfectly, from stale
+sources.
 
 Because nothing in the repository records which commits a build used, have the
 workflow write them out:
@@ -106,23 +113,45 @@ SpaDES.docs::installModulePkgs("modules")
 ```{r build-script, eval = FALSE}
 paths <- SpaDES.docs::manualPaths()
 
+SpaDES.docs::manualVersion()   # index.Rmd's subtitle reads it from the environment
+
 SpaDES.docs::writePkgBib(file.path(paths$citations, "packages.bib"))
 SpaDES.docs::downloadCSL("ecology-letters", paths$citations)
+
+## references.bib is OUTPUT ONLY -- see the note below
 SpaDES.docs::collapseModuleBibs(
   modulePath = file.path(paths$prj, "modules"),
-  extraBibs = file.path(paths$citations, c("packages.bib", "references.bib")),
+  extraBibs = file.path(paths$citations, c("packages.bib", "references_manual.bib")),
   outFile = file.path(paths$citations, "references.bib")
 )
 
 chapters <- SpaDES.docs::prepManualRmds("./modules", rebuildCache = FALSE)
 
-bookdown::render_book(output_format = "all", envir = new.env())
+SpaDES.docs::renderManual(outputDir = paths$docs, output_format = "all")
 
 ## these must be inside the published directory, not at the repository root
 SpaDES.docs::stagePagesFiles(paths$docs, cname = "example.predictiveecology.org")
 
-unlink("_manual_rmds", recursive = TRUE)
+unlink(unique(dirname(chapters)), recursive = TRUE)
 ```
+
+Use `renderManual()` rather than `bookdown::render_book()` directly. bookdown
+knits once and then writes each declared format in turn, so the website is
+already on disk when a later format fails, and letting that failure propagate
+discards it along with the deploy that would have published it.
+`renderManual()` reports the failure as a GitHub Actions warning and still
+requires the site itself, so a format that cannot be built costs only that
+format.
+
+Declare the fragile formats **last** in `_output.yml`, for the same reason: the
+formats are written in declaration order and a failure stops the rest, so a PDF
+in the middle costs the EPUB after it too.
+
+Keep the output bibliography out of its own `extraBibs`: listing it there merges
+the file into itself on every build, accumulating RefManageR's `:1`-suffixed
+duplicates of every entry. Put curated entries in a tracked file of their own and
+treat the assembled one as disposable, which it has to be -- `citations/` is
+generated and starts empty on CI.
 
 ## Deploying
 
@@ -209,27 +238,75 @@ so nothing has to be edited when a release is cut.
 Have the workflow do it, so a release does not depend on someone remembering:
 
 ```yaml
+      ## after the deploy, never before it -- see below
       - name: Archive the release PDF
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "$(git status --porcelain archive/pdf)" ]; then
+          ## '??' is untracked: a version not in the repository before. A
+          ## modified tracked file is a re-render of a version already archived
+          if [ -z "$(git status --porcelain archive/pdf | grep '^??' || true)" ]; then
             echo "No newly archived PDF; nothing to commit."
+            git checkout -- archive/pdf 2>/dev/null || true
+            exit 0
+          fi
+          git checkout -- archive/pdf 2>/dev/null || true
+          version="$(Rscript -e 'cat(read.dcf("DESCRIPTION", fields = "Version")[1])')"
+          branch="archive/pdf-v${version}"
+          if gh pr list --head "${branch}" --state open --json number --jq 'length' \
+               | grep -qv '^0$'; then
+            echo "A pull request for ${branch} is already open."
             exit 0
           fi
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${branch}"
           git add archive/pdf
-          git commit -m "Archive the manual PDF"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
-            "HEAD:${GITHUB_REF_NAME}"
+          git commit -m "Archive the manual PDF for v${version}"
+          git push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/${branch}"
+          gh pr create --base "${GITHUB_REF_NAME}" --head "${branch}" \
+            --title "Archive the manual PDF for v${version}"
 ```
 
-This is self-gating: `archiveManualPDF()` writes a file only when a PDF was
-rendered and that version is not already archived, so the step is a no-op on
-ordinary builds and needs no separate release trigger.
+Three parts of that need to stay as they are.
+
+**Open a pull request; do not push.** A ruleset on the default branch refuses a
+direct push, with `GH006: Changes must be made through a pull request`. Note
+also that the step is gated `if: github.event_name != 'pull_request'`, so no
+pull request build runs it: whatever it does is first exercised by a merge, and
+should be read carefully rather than trusted to a green check.
+
+**Test for an untracked file, not for any change.** A PDF is not reproducible
+byte for byte -- xelatex stamps a creation date and a document ID into each run
+-- so `git status --porcelain archive/pdf` reports a modification after every
+build, and a check for any change opens a pull request every night. Requires
+SpaDES.docs >= 0.5.1, which leaves an already-archived version alone; this check
+covers the case where something else rewrites the file.
+
+**Put it after the deploy.** A failure here must not stop the site from
+updating, which is what happens when it runs first: nothing handling a secondary
+artifact should be able to withhold the primary one.
+
+### Linking the versions
+
+`bs4_book` has no download menu: `download: ["pdf", "epub"]` is a `gitbook`
+option, accepted and ignored under `bookdown::bs4_book`, so setting it publishes
+the files with nothing pointing at them. Link them from the landing page:
+
+```{r links, eval = FALSE}
+## in index.Rmd, in a `results = "asis"` chunk
+cat(SpaDES.docs::manualArchiveLinks(manualName = "My Manual"), sep = "")
+```
+
+`manualArchiveLinks()` lists the archived releases newest first, from the files
+present, excluding the version being built. For the current build's own PDF and
+EPUB, take the formats from `_output.yml` rather than testing for the files:
+`bs4_book` renders first, so neither file exists yet when `index.Rmd` is knitted,
+and a test for them drops the links from every build.
 
 ### Do not use `clean-exclude` for this
 
