@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Building a project manual}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+## audience: technical collaborators setting up or maintaining a SpaDES manual;
+##   they run build.R, edit _bookdown.yml and the workflow YAML, so function
+##   names, file paths and YAML belong in the body rather than an appendix
 ---
 
 ```{r setup, include = FALSE}
