@@ -14,29 +14,18 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-A manual either pins the modules it documents or tracks them, and that choice
-determines the rest of its setup.
+A manual either pins the modules it documents or tracks them, and that choice determines the rest of its setup.
 
-A **project manual** documents the modules *as a particular project used them*,
-so it pins them and the manual agrees with the results it describes. See
-`vignette("building-a-project-manual")`;
-[LandWeb](https://github.com/PredictiveEcology/LandWeb) is the example.
+A **project manual** documents the modules *as a particular project used them*, so it pins them and the manual agrees with the results it describes.
+See `vignette("building-a-project-manual")`; [LandWeb](https://github.com/PredictiveEcology/LandWeb) is the example.
 
-A **continuously updated manual** documents the modules *as they are now*, so it
-tracks them and a documentation fix reaches the published site without anyone
-republishing the manual. This vignette covers that arrangement, as used by
-[LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual) and
-[fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual).
+A **continuously updated manual** documents the modules *as they are now*, so it tracks them and a documentation fix reaches the published site without anyone republishing the manual.
+This vignette covers that arrangement, as used by [LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual) and [fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual).
 
-A git submodule records a commit, so keeping it current means someone bumping a
-pointer for every module change. Checking the modules out by branch in CI
-records the branch instead, and each build resolves it to whatever that branch
-points at that day.
+A git submodule records a commit, so keeping it current means someone bumping a pointer for every module change.
+Checking the modules out by branch in CI records the branch instead, and each build resolves it to whatever that branch points at that day.
 
-Setting one up means a repository holding the book, a workflow that fetches the
-modules and deploys the rendered site, a build script that assembles the
-chapters and bibliography, and -- if the manual has releases -- an archive of
-released PDFs.
+Setting one up means a repository holding the book, a workflow that fetches the modules and deploys the rendered site, a build script that assembles the chapters and bibliography, and -- if the manual has releases -- an archive of released PDFs.
 
 ## The shape
 
@@ -58,9 +47,8 @@ The manual is its own repository, and the module sources are build output:
 
 ## Fetching the modules
 
-Check each module out by branch, with the standard action. The workflow is then
-the manifest: every entry names a repository and a ref, and there is no custom
-code to maintain.
+Check each module out by branch, with the standard action.
+The workflow is then the manifest: every entry names a repository and a ref, and there is no custom code to maintain.
 
 ```yaml
 env:
@@ -79,22 +67,15 @@ jobs:
           path: modules/Biomass_core
 ```
 
-Use `github.event.inputs`, not the `inputs` context, so the expression is `null`
-rather than an error on `push` and `schedule` events.
+Use `github.event.inputs`, not the `inputs` context, so the expression is `null` rather than an error on `push` and `schedule` events.
 
-A module whose branches differ from the rest can override the default in its own
-step -- but prefer fixing the module. `Biomass_validationKNN` was checked out at
-`main` for a year because work there had resumed directly on `main`, leaving its
-`development` 12 commits behind; the exception then had to be remembered every
-time `MODULE_REF` was considered. Merging `main` back into `development` let the
-exception go, and `MODULE_REF` covers every module again.
+A module whose branches differ from the rest can override the default in its own step -- but prefer fixing the module.
+`Biomass_validationKNN` was checked out at `main` for a year because work there had resumed directly on `main`, leaving its `development` 12 commits behind; the exception then had to be remembered every time `MODULE_REF` was considered.
+Merging `main` back into `development` let the exception go, and `MODULE_REF` covers every module again.
 
-Nothing detects the situation that made the exception necessary: a module whose
-`development` has quietly fallen behind its `main` builds perfectly, from stale
-sources.
+Nothing detects the situation that made the exception necessary: a module whose `development` has quietly fallen behind its `main` builds perfectly, from stale sources.
 
-Because nothing in the repository records which commits a build used, have the
-workflow write them out:
+Because nothing in the repository records which commits a build used, have the workflow write them out:
 
 ```yaml
       - name: Record module versions
@@ -106,8 +87,8 @@ workflow write them out:
 
 ## Installing what the chapters need
 
-The manual's own dependencies come from its `DESCRIPTION`. The modules declare
-their own, which cannot be resolved until the modules are on disk:
+The manual's own dependencies come from its `DESCRIPTION`.
+The modules declare their own, which cannot be resolved until the modules are on disk:
 
 ```{r install, eval = FALSE}
 remotes::install_deps()
@@ -141,43 +122,27 @@ SpaDES.docs::stagePagesFiles(paths$docs, cname = "example.predictiveecology.org"
 unlink(unique(dirname(chapters)), recursive = TRUE)
 ```
 
-Use `renderManual()` rather than `bookdown::render_book()` directly. bookdown
-knits once and then writes each declared format in turn, so the website is
-already on disk when a later format fails, and letting that failure propagate
-discards it along with the deploy that would have published it.
-`renderManual()` reports the failure as a GitHub Actions warning and still
-requires the site itself, so a format that cannot be built costs only that
-format.
+Use `renderManual()` rather than `bookdown::render_book()` directly. bookdown knits once and then writes each declared format in turn, so the website is already on disk when a later format fails, and letting that failure propagate discards it along with the deploy that would have published it.
+`renderManual()` reports the failure as a GitHub Actions warning and still requires the site itself, so a format that cannot be built costs only that format.
 
-Declare the fragile formats **last** in `_output.yml`, for the same reason: the
-formats are written in declaration order and a failure stops the rest, so a PDF
-in the middle costs the EPUB after it too.
+Declare the fragile formats **last** in `_output.yml`, for the same reason: the formats are written in declaration order and a failure stops the rest, so a PDF in the middle costs the EPUB after it too.
 
-Keep the output bibliography out of its own `extraBibs`: listing it there merges
-the file into itself on every build, accumulating RefManageR's `:1`-suffixed
-duplicates of every entry. Put curated entries in a tracked file of their own and
-treat the assembled one as disposable, which it has to be -- `citations/` is
-generated and starts empty on CI.
+Keep the output bibliography out of its own `extraBibs`: listing it there merges the file into itself on every build, accumulating RefManageR's `:1`-suffixed duplicates of every entry.
+Put curated entries in a tracked file of their own and treat the assembled one as disposable, which it has to be -- `citations/` is generated and starts empty on CI.
 
 ## Deploying
 
-The deploy publishes the *contents* of the rendered directory to a branch, so
-anything written at the repository root never reaches the site. `.nojekyll` and
-`CNAME` both have to be inside it, which is what `stagePagesFiles()` is for.
+The deploy publishes the *contents* of the rendered directory to a branch, so anything written at the repository root never reaches the site.
+`.nojekyll` and `CNAME` both have to be inside it, which is what `stagePagesFiles()` is for.
 
-Writing them at the root appears to work for as long as an earlier deploy left
-copies behind and the action deploys with `clean: false`. A branch published for
-the first time has neither, and the failure is quiet: a green build, and a site
-that either loses its custom domain or drops the `_`-prefixed directories
-bookdown emits.
+Writing them at the root appears to work for as long as an earlier deploy left copies behind and the action deploys with `clean: false`.
+A branch published for the first time has neither, and the failure is quiet: a green build, and a site that either loses its custom domain or drops the `_`-prefixed directories bookdown emits.
 
 ## Caching
 
-Cache the directories bookdown actually writes. With `output_dir` set it writes
-knitr's cache to `<book_filename>_cache/` and the figures to
-`<book_filename>_files/`, both at the repository root. There is no
-`_bookdown_files` directory, and caching a path of that name fails silently --
-the action warns that the path does not exist and saves nothing, on every build.
+Cache the directories bookdown actually writes.
+With `output_dir` set it writes knitr's cache to `<book_filename>_cache/` and the figures to `<book_filename>_files/`, both at the repository root.
+There is no `_bookdown_files` directory, and caching a path of that name fails silently -- the action warns that the path does not exist and saves nothing, on every build.
 
 ```yaml
       - uses: actions/cache@v6
@@ -189,29 +154,24 @@ the action warns that the path does not exist and saves nothing, on every build.
           restore-keys: bookdown-
 ```
 
-Cache the R library as well. Installing the SpaDES stack from source dominates
-the job, and a daily schedule would otherwise pay it every day.
+Cache the R library as well.
+Installing the SpaDES stack from source dominates the job, and a daily schedule would otherwise pay it every day.
 
 ## Rebuild cadence
 
-`schedule`, plus `workflow_dispatch`, plus push to the manual's own default
-branch. A daily rebuild keeps the site within a day of the modules without
-anyone touching this repository.
+`schedule`, plus `workflow_dispatch`, plus push to the manual's own default branch.
+A daily rebuild keeps the site within a day of the modules without anyone touching this repository.
 
-Per-push rebuilding, where each module repository notifies the manual, needs a
-token with write access distributed to every module repository, and it rebuilds
-a whole book because one typo was fixed. The cost is not worth the freshness.
+Per-push rebuilding, where each module repository notifies the manual, needs a token with write access distributed to every module repository, and it rebuilds a whole book because one typo was fixed.
+The cost is not worth the freshness.
 
 ## Releases, and keeping the old PDFs
 
-A manual that tracks a branch has no version of its own: it describes whatever
-the modules say today. A release is the other build, with pinned refs, a version
-number, and a PDF that stays available after the site has moved on.
+A manual that tracks a branch has no version of its own: it describes whatever the modules say today.
+A release is the other build, with pinned refs, a version number, and a PDF that stays available after the site has moved on.
 
-Keep the released PDFs in version control, under `archive/pdf/`, and publish
-them with the site rather than leaving them on the published branch. That branch
-is rebuilt by every deploy, and an old PDF cannot be regenerated from current
-sources -- so it is the one artifact that must not live only there.
+Keep the released PDFs in version control, under `archive/pdf/`, and publish them with the site rather than leaving them on the published branch.
+That branch is rebuilt by every deploy, and an old PDF cannot be regenerated from current sources -- so it is the one artifact that must not live only there.
 
 ```{r archive, eval = FALSE}
 paths <- SpaDES.docs::manualPaths()
@@ -232,12 +192,10 @@ SpaDES.docs::publishManualArchive(
 ```
 
 Take the version from `DESCRIPTION` rather than setting it in the build script.
-Two places to edit is one place to forget, and `archiveManualPDF()` refuses an
-empty version rather than writing `my-manual-v.pdf` over the previous release.
+Two places to edit is one place to forget, and `archiveManualPDF()` refuses an empty version rather than writing `my-manual-v.pdf` over the previous release.
 
 Link the archive from the book's preface with a **static** link to `archive/`.
-The page behind it is regenerated every build from the files actually present,
-so nothing has to be edited when a release is cut.
+The page behind it is regenerated every build from the files actually present, so nothing has to be edited when a release is cut.
 
 ### Committing the new PDF
 
@@ -280,48 +238,32 @@ Have the workflow do it, so a release does not depend on someone remembering:
 
 Three parts of that need to stay as they are.
 
-**Open a pull request; do not push.** A ruleset on the default branch refuses a
-direct push, with `GH006: Changes must be made through a pull request`. Note
-also that the step is gated `if: github.event_name != 'pull_request'`, so no
-pull request build runs it: whatever it does is first exercised by a merge, and
-should be read carefully rather than trusted to a green check.
+**Open a pull request; do not push.** A ruleset on the default branch refuses a direct push, with `GH006: Changes must be made through a pull request`.
+Note also that the step is gated `if: github.event_name != 'pull_request'`, so no pull request build runs it: whatever it does is first exercised by a merge, and should be read carefully rather than trusted to a green check.
 
-**Test for an untracked file, not for any change.** A PDF is not reproducible
-byte for byte -- xelatex stamps a creation date and a document ID into each run
--- so `git status --porcelain archive/pdf` reports a modification after every
-build, and a check for any change opens a pull request every night. Requires
-SpaDES.docs >= 0.5.1, which leaves an already-archived version alone; this check
-covers the case where something else rewrites the file.
+**Test for an untracked file, not for any change.** A PDF is not reproducible byte for byte -- xelatex stamps a creation date and a document ID into each run -- so `git status --porcelain archive/pdf` reports a modification after every build, and a check for any change opens a pull request every night.
+Requires SpaDES.docs >= 0.5.1, which leaves an already-archived version alone; this check covers the case where something else rewrites the file.
 
-**Put it after the deploy.** A failure here must not stop the site from
-updating, which is what happens when it runs first: nothing handling a secondary
-artifact should be able to withhold the primary one.
+**Put it after the deploy.** A failure here must not stop the site from updating, which is what happens when it runs first: nothing handling a secondary artifact should be able to withhold the primary one.
 
 ### Linking the versions
 
-`bs4_book` has no download menu: `download: ["pdf", "epub"]` is a `gitbook`
-option, accepted and ignored under `bookdown::bs4_book`, so setting it publishes
-the files with nothing pointing at them. Link them from the landing page:
+`bs4_book` has no download menu: `download: ["pdf", "epub"]` is a `gitbook` option, accepted and ignored under `bookdown::bs4_book`, so setting it publishes the files with nothing pointing at them.
+Link them from the landing page:
 
 ```{r links, eval = FALSE}
 ## in index.Rmd, in a `results = "asis"` chunk
 cat(SpaDES.docs::manualArchiveLinks(manualName = "My Manual"), sep = "")
 ```
 
-`manualArchiveLinks()` lists the archived releases newest first, from the files
-present, excluding the version being built. For the current build's own PDF and
-EPUB, take the formats from `_output.yml` rather than testing for the files:
-`bs4_book` renders first, so neither file exists yet when `index.Rmd` is knitted,
-and a test for them drops the links from every build.
+`manualArchiveLinks()` lists the archived releases newest first, from the files present, excluding the version being built.
+For the current build's own PDF and EPUB, take the formats from `_output.yml` rather than testing for the files: `bs4_book` renders first, so neither file exists yet when `index.Rmd` is knitted, and a test for them drops the links from every build.
 
 ### Do not use `clean-exclude` for this
 
-Keeping the archive only on the published branch, preserved with the deploy
-action's `clean-exclude`, looks simpler and is worse. It reintroduces files that
-linger on that branch without any build producing them -- which is how a stale
-PDF from a previous era ends up published beside a current one. Deploying with
-`clean: true`, from a directory the build fully populates, keeps the branch an
-exact image of what was built.
+Keeping the archive only on the published branch, preserved with the deploy action's `clean-exclude`, looks simpler and is worse.
+It reintroduces files that linger on that branch without any build producing them -- which is how a stale PDF from a previous era ends up published beside a current one.
+Deploying with `clean: true`, from a directory the build fully populates, keeps the branch an exact image of what was built.
 
 ## Adding a module
 
@@ -331,6 +273,6 @@ Three things change together, and two of them fail quietly:
 2. a chapter entry in `_bookdown.yml`;
 3. the module list in the manual's landing page, if it has one.
 
-Miss the second and the chapter is fetched, staged and silently absent from the
-book. `prepManualRmds()` warns in both directions for this reason. Miss the
-third and it is in the book but not on the landing page, which nothing checks.
+Miss the second and the chapter is fetched, staged and silently absent from the book.
+`prepManualRmds()` warns in both directions for this reason.
+Miss the third and it is in the book but not on the landing page, which nothing checks.

@@ -166,32 +166,31 @@ withr::with_dir(manDir, {
 })
 ```
 
-`references.bib` is **output only**. Listing it in its own `extraBibs` looks like "the manual accumulates its references", and what it actually does is merge the file into itself on every build: one manual's copy had grown to 265 entries, 216 of them RefManageR's `:1`-style duplicate markers. Keep curated entries in a separate tracked file -- `references_manual.bib` above -- and let the output be disposable. It has to be, because `citations/` is generated and starts empty on CI.
+`references.bib` is **output only**.
+Listing it in its own `extraBibs` looks like "the manual accumulates its references", and what it actually does is merge the file into itself on every build: one manual's copy had grown to 265 entries, 216 of them RefManageR's `:1`-style duplicate markers.
+Keep curated entries in a separate tracked file -- `references_manual.bib` above -- and let the output be disposable.
+It has to be, because `citations/` is generated and starts empty on CI.
 
-`manualVersion()` reads `Version` from DESCRIPTION by field name. Setting the version in the build script instead gives two places to edit, and reading it by position breaks as soon as a field is added above it.
+`manualVersion()` reads `Version` from DESCRIPTION by field name.
+Setting the version in the build script instead gives two places to edit, and reading it by position breaks as soon as a field is added above it.
 
 `collapseModuleBibs()` skips `.bib` files with no entries.
 A module that cites nothing yet reasonably ships a comments-only placeholder, and `RefManageR::ReadBib()` fails on a file with no entries -- which is enough to take down a whole manual.
 
 ## Constraints
 
-**Add the staging directory to the book's `.gitignore`.**
-The generated chapters are build output.
+**Add the staging directory to the book's `.gitignore`.** The generated chapters are build output.
 Before they were staged there they went into each module's own directory, and in these projects those are git submodules.
 Every module repository therefore needed its own `.gitignore` line, and a failed build left a file in each one.
 
-**Chapter order comes from `_bookdown.yml`, not from the filesystem.**
-`prepManualRmds()` warns in both directions: a chapter listed but not prepared is not de-duplicated against the others, and a chapter prepared but not listed is written, builds cleanly, and is simply absent from the book.
+**Chapter order comes from `_bookdown.yml`, not from the filesystem.** `prepManualRmds()` warns in both directions: a chapter listed but not prepared is not de-duplicated against the others, and a chapter prepared but not listed is written, builds cleanly, and is simply absent from the book.
 
-**Run it from the book root.**
-`_bookdown.yml` is read from the working directory by default; pass `bookdownYML` if it is elsewhere.
+**Run it from the book root.** `_bookdown.yml` is read from the working directory by default; pass `bookdownYML` if it is elsewhere.
 
-**Cross-reference labels are global.**
-Two chapters using `\@ref(tab:inputs)` collide.
+**Cross-reference labels are global.** Two chapters using `\@ref(tab:inputs)` collide.
 The `newModule()` template suffixes labels with the module name for this reason; keep that if you edit them.
 
-**A module's figures do not move with its chapter.**
-The chapter is read from the book root once it is staged, so a path that worked from the module's own directory no longer resolves.
+**A module's figures do not move with its chapter.** The chapter is read from the book root once it is staged, so a path that worked from the module's own directory no longer resolves.
 Use `includeFigure()` in a figure chunk, and `stageFigure()` where a chunk writes the markdown itself, such as a linked badge:
 
 ```{r figures, eval = FALSE}
@@ -204,6 +203,6 @@ cat(paste0("[![version](", SpaDES.docs::stageFigure("figures/badge.png"), ")](",
 Do not write an absolute path instead, via `normPath()` or similar: it is correct only on the machine that built the book, so the chapter renders locally and publishes a dead link.
 The build stays green while every published chapter serves `src="/home/runner/work/..."`.
 
-**`bs4_book` has no download menu.**
-`download: ["pdf", "epub"]` is a `gitbook` option. Setting it under `bookdown::bs4_book` is accepted and ignored, so the files are published with nothing linking to them.
+**`bs4_book` has no download menu.** `download: ["pdf", "epub"]` is a `gitbook` option.
+Setting it under `bookdown::bs4_book` is accepted and ignored, so the files are published with nothing linking to them.
 Link them from the landing page instead, alongside `manualArchiveLinks()` for the released ones.

@@ -4,10 +4,7 @@
 
 Helper utilities for creating SpaDES module documentation and manuals.
 
-<!-- badges: start -->
-[![R-CMD-check](https://github.com/PredictiveEcology/SpaDES.docs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PredictiveEcology/SpaDES.docs/actions/workflows/R-CMD-check.yaml)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- badges: end -->
+<!-- badges: start --> [![R-CMD-check](https://github.com/PredictiveEcology/SpaDES.docs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PredictiveEcology/SpaDES.docs/actions/workflows/R-CMD-check.yaml) [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) <!-- badges: end -->
 
 A SpaDES module documents itself in `<module>/<module>.Rmd`, written to be knitted on its own.
 A *project manual* is a [bookdown](https://bookdown.org) book that gathers several of those files into one document, with continuous chapter numbering, one bibliography, and a PDF.
@@ -29,10 +26,9 @@ See [**Building a project manual**](https://predictiveecology.github.io/SpaDES.d
 
 ## Manuals built with it
 
-Which one to copy follows from what the manual is for. A **project manual** pins
-its modules, so it and the results it describes agree; a **continuously updated**
-manual tracks them, so a documentation fix reaches the site without anyone
-republishing. Almost everything else follows from that choice.
+Which one to copy follows from what the manual is for.
+A **project manual** pins its modules, so it and the results it describes agree; a **continuously updated** manual tracks them, so a documentation fix reaches the site without anyone republishing.
+Almost everything else follows from that choice.
 
 | | | formats |
 |---|---|---|
