@@ -12,6 +12,15 @@ survive knitting.
   links point at the copies the site publishes rather than a repository's raw
   files, which stop working if it is renamed or made private.
 
+* `prepManualRmds()` reports a line that begins with a text reference without
+  being its own paragraph. bookdown reads any such line as a definition, while
+  de-duplication here requires its own paragraph, because removing a
+  mid-paragraph match would delete the sentence around it. A use that lands first
+  on a line after wrapping therefore produced `Possibly duplicated text
+  reference labels` from a build that had de-duplicated everything it could see,
+  with nothing to say where it came from. The warning names the file, the line
+  and the label; the fix is to re-wrap the module's prose.
+
 * `manualChunkOptions()` sets the options and chunk options every manual chapter
   is built with, replacing a near-identical `before_chapter_script` in each
   manual.
