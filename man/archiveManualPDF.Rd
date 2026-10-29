@@ -22,11 +22,24 @@ archiveManualPDF(
 \item{archiveDir}{directory to copy into, created if needed.}
 }
 \value{
-path of the archived copy, or \code{NULL} if there was no PDF to archive,
-invisibly.
+path of the archived copy, whether this call wrote it or found it
+already there, or \code{NULL} if there was no PDF to archive, invisibly.
 }
 \description{
 Keeps a versioned copy of each released PDF. Does nothing when no PDF was
 produced, which is the usual case while a manual renders HTML only -- copying
 unconditionally silently succeeds with \code{FALSE} and leaves an empty archive.
+}
+\details{
+An archived version is never overwritten. A release PDF is a record of what
+that version looked like, so the first copy is the one that counts, and a
+later build at the same version leaves it alone.
+
+That is also the only workable test. A PDF is not reproducible byte for byte:
+xelatex stamps a creation date and a document ID into every run, so the same
+sources archive differently each time. A caller that commits whatever changed
+under \code{archiveDir} therefore saw a modified file after every build, and
+overwriting made a release PDF depend on which build touched it last. Keyed
+on the file's existence, archiving happens once per version, which is what a
+release means.
 }
