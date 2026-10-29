@@ -132,7 +132,8 @@ test_that("prepManualRmds() does not delete prose that begins with a text refere
     writeModule(m, "modules", body = body)
   }
 
-  out <- prepManualRmds("modules")
+  ## the use at the start of a line also warns, which the next test covers
+  out <- suppressWarnings(prepManualRmds("modules"))
   second <- readLines(grep("modL", out, value = TRUE))
 
   ## the duplicate *definition* goes
@@ -140,6 +141,37 @@ test_that("prepManualRmds() does not delete prose that begins with a text refere
   ## the prose does not -- it is a use, not a definition
   expect_length(grep("cover data in the study area", second, fixed = TRUE), 1)
   expect_length(grep("Paragraph start,", second, fixed = TRUE), 1)
+})
+
+
+test_that("prepManualRmds() reports a text reference bookdown will misread", {
+  localBook(c("modRef1", "modRef2"))
+  ## the use on its own line is what bookdown reads as a second definition
+  body <- c(
+    "(ref:pct) %",
+    "",
+    "Paragraph start,",
+    "(ref:pct) cover data in the study area."
+  )
+  for (m in c("modRef1", "modRef2")) {
+    writeModule(m, "modules", body = body)
+  }
+
+  expect_snapshot(invisible(prepManualRmds("modules")))
+})
+
+test_that("textRefMisreads() separates a wrapped use from a definition", {
+  lines <- c(
+    "(ref:pct) %",
+    "",
+    "Paragraph start,",
+    "(ref:pct) cover data.",
+    "",
+    "A sentence with (ref:pct) mid-line."
+  )
+
+  expect_identical(textRefDefs(lines), 1L)
+  expect_identical(textRefMisreads(lines), 4L)
 })
 
 ## ---- structural guards -----------------------------------------------------

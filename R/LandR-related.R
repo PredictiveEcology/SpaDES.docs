@@ -128,6 +128,34 @@ textRefDefs <- function(lines) {
   which(cls == "prose" & grepl("^\\(ref:[^)]+\\)", lines) & ownBlock)
 }
 
+#' Text references bookdown reads as definitions and [textRefDefs()] does not
+#'
+#' \pkg{bookdown} treats any line beginning `(ref:key) ` as a definition.
+#' [textRefDefs()] requires the line to be its own paragraph, because removing a
+#' mid-paragraph match as a cross-chapter duplicate would delete the sentence it
+#' sits in.
+#'
+#' Prose that wraps so a *use* lands first on a line falls in that gap: a
+#' definition to \pkg{bookdown}, a use here, and so never de-duplicated. The
+#' symptom is `Possibly duplicated text reference labels` from a build that
+#' de-duplicated everything it could see. The fix is to re-wrap the module's
+#' prose, so this is reported rather than acted on.
+#'
+#' @param lines character vector of lines.
+#'
+#' @return integer vector of line indices.
+#'
+#' @keywords internal
+#' @rdname textRefDefs
+textRefMisreads <- function(lines) {
+  if (!length(lines)) {
+    return(integer(0))
+  }
+  cls <- classifyRmdLines(lines)
+  opens <- which(cls == "prose" & grepl("^\\(ref:[^)]+\\)", lines))
+  setdiff(opens, textRefDefs(lines))
+}
+
 ## ---- per-module preparation -------------------------------------------------
 
 #' Turn one module's `.Rmd` into a book chapter
@@ -497,6 +525,28 @@ prepManualRmds <- function(
       call. = FALSE
     )
     return(copyModuleRmds)
+  }
+
+  ## Lines bookdown will read as definitions but that cannot be de-duplicated
+  ## here. Reported with the label and the line, because the fix is in the
+  ## module's prose and the bookdown warning alone does not say where to look.
+  misreads <- lapply(allModules, textRefMisreads)
+  misreads <- misreads[lengths(misreads) > 0]
+  if (length(misreads)) {
+    where <- vapply(names(misreads), function(f) {
+      ids <- misreads[[f]]
+      labels <- sub("^\\((ref:[^)]+)\\).*$", "\\1", allModules[[f]][ids])
+      paste0(basename(f), " line ", ids, " (", labels, ")", collapse = ", ")
+    }, character(1), USE.NAMES = FALSE)
+    warning(
+      "prepManualRmds(): ", length(unlist(misreads)), " line(s) begin with a ",
+      "text reference without being its own paragraph. bookdown reads each as a ",
+      "definition, so it may report a duplicated label that de-duplication here ",
+      "cannot remove -- doing so would delete the sentence. Re-wrap the module's ",
+      "prose so the label is not first on the line: ",
+      paste(where, collapse = ", "),
+      call. = FALSE
+    )
   }
 
   refTextLinesID <- lapply(allModules, function(x) {

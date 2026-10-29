@@ -2,19 +2,36 @@
 % Please edit documentation in R/LandR-related.R
 \name{textRefDefs}
 \alias{textRefDefs}
+\alias{textRefMisreads}
 \title{Text-reference definitions, as distinct from uses}
 \usage{
 textRefDefs(lines)
+
+textRefMisreads(lines)
 }
 \arguments{
 \item{lines}{character vector of lines.}
 }
 \value{
 integer vector of line indices holding definitions.
+
+integer vector of line indices.
 }
 \description{
 A \pkg{bookdown} text reference is its own paragraph. The same pattern in the
 middle of a paragraph is a \emph{use}, and removing it as a cross-chapter
 duplicate deletes the sentence around it.
+
+\pkg{bookdown} treats any line beginning \code{(ref:key) } as a definition.
+\code{\link[=textRefDefs]{textRefDefs()}} requires the line to be its own paragraph, because removing a
+mid-paragraph match as a cross-chapter duplicate would delete the sentence it
+sits in.
+}
+\details{
+Prose that wraps so a \emph{use} lands first on a line falls in that gap: a
+definition to \pkg{bookdown}, a use here, and so never de-duplicated. The
+symptom is \verb{Possibly duplicated text reference labels} from a build that
+de-duplicated everything it could see. The fix is to re-wrap the module's
+prose, so this is reported rather than acted on.
 }
 \keyword{internal}
