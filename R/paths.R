@@ -20,8 +20,7 @@
 manualPaths <- function(prjDir = NULL, bookdownYML = "_bookdown.yml", create = TRUE) {
   if (is.null(prjDir)) {
     if (!requireNamespace("rprojroot", quietly = TRUE)) {
-      stop("manualPaths() needs the 'rprojroot' package, or an explicit `prjDir`.",
-           call. = FALSE)
+      stop("manualPaths() needs the 'rprojroot' package, or an explicit `prjDir`.", call. = FALSE)
     }
     prjDir <- rprojroot::find_root(
       rprojroot::is_rstudio_project | rprojroot::is_git_root | rprojroot::from_wd,

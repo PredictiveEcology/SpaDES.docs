@@ -28,17 +28,17 @@
 #'
 #' @export
 #' @importFrom Require checkPath
-collapseModuleBibs <- function(modulePath = "modules",
-                               extraBibs = character(0),
-                               outFile = file.path("citations", "references.bib")) {
+collapseModuleBibs <- function(
+  modulePath = "modules",
+  extraBibs = character(0),
+  outFile = file.path("citations", "references.bib")
+) {
   if (!requireNamespace("RefManageR", quietly = TRUE)) {
-    stop("collapseModuleBibs() needs the 'RefManageR' package to be installed.",
-         call. = FALSE)
+    stop("collapseModuleBibs() needs the 'RefManageR' package to be installed.", call. = FALSE)
   }
 
   bibFiles <- c(
-    list.files(modulePath, pattern = "references_.*\\.bib$",
-               recursive = TRUE, full.names = TRUE),
+    list.files(modulePath, pattern = "references_.*\\.bib$", recursive = TRUE, full.names = TRUE),
     extraBibs
   )
   bibFiles <- unique(bibFiles[file.exists(bibFiles)])
@@ -47,16 +47,23 @@ collapseModuleBibs <- function(modulePath = "modules",
   if (any(!hasEntries)) {
     ## not a warning: a module that cites nothing is a normal state, and this
     ## would otherwise fire on every build of a manual that has one
-    message("collapseModuleBibs(): skipping ", sum(!hasEntries),
-            " .bib file(s) with no entries: ",
-            paste(basename(bibFiles[!hasEntries]), collapse = ", "))
+    message(
+      "collapseModuleBibs(): skipping ",
+      sum(!hasEntries),
+      " .bib file(s) with no entries: ",
+      paste(basename(bibFiles[!hasEntries]), collapse = ", ")
+    )
   }
   bibFiles <- bibFiles[hasEntries]
 
   if (!length(bibFiles)) {
-    warning("collapseModuleBibs(): no .bib file with any entries was found ",
-            "under '", modulePath, "'. Writing an empty bibliography.",
-            call. = FALSE)
+    warning(
+      "collapseModuleBibs(): no .bib file with any entries was found ",
+      "under '",
+      modulePath,
+      "'. Writing an empty bibliography.",
+      call. = FALSE
+    )
     checkPath(dirname(outFile), create = TRUE)
     file.create(outFile)
     return(invisible(outFile))
@@ -92,8 +99,7 @@ bibHasEntries <- function(f) {
 #' @export
 #' @importFrom knitr write_bib
 #' @importFrom Require checkPath
-writePkgBib <- function(file = file.path("citations", "packages.bib"),
-                        packages = NULL) {
+writePkgBib <- function(file = file.path("citations", "packages.bib"), packages = NULL) {
   if (is.null(packages)) {
     packages <- c("base", .packages(all.available = TRUE))
   }
@@ -121,14 +127,12 @@ writePkgBib <- function(file = file.path("citations", "packages.bib"),
 #' @export
 #' @importFrom Require checkPath
 #' @importFrom utils download.file
-downloadCSL <- function(style = "ecology-letters", destDir = "citations",
-                        overwrite = FALSE) {
+downloadCSL <- function(style = "ecology-letters", destDir = "citations", overwrite = FALSE) {
   destDir <- checkPath(destDir, create = TRUE)
   dest <- file.path(destDir, paste0(style, ".csl"))
   if (file.exists(dest) && !isTRUE(overwrite)) {
     return(invisible(dest))
   }
-  download.file(paste0("https://www.zotero.org/styles/", style, "?source=1"),
-                destfile = dest)
+  download.file(paste0("https://www.zotero.org/styles/", style, "?source=1"), destfile = dest)
   invisible(dest)
 }

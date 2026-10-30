@@ -1,16 +1,26 @@
 ## A .bib holding only comments, which is what a module that cites nothing ships.
 writeCommentBib <- function(path) {
-  writeLines(c("% References cited in someModule.Rmd.",
-               "% The module's own citation lives in ../citation.bib."), path)
+  writeLines(
+    c(
+      "% References cited in someModule.Rmd.",
+      "% The module's own citation lives in ../citation.bib."
+    ),
+    path
+  )
 }
 
 writeEntryBib <- function(path, key) {
-  writeLines(c(paste0("@Article{", key, ","),
-               "  author = {A. Smith},",
-               "  title = {A real entry},",
-               "  journal = {Journal of Fire},",
-               "  year = {2017},",
-               "}"), path)
+  writeLines(
+    c(
+      paste0("@Article{", key, ","),
+      "  author = {A. Smith},",
+      "  title = {A real entry},",
+      "  journal = {Journal of Fire},",
+      "  year = {2017},",
+      "}"
+    ),
+    path
+  )
 }
 
 localModules <- function(envir = parent.frame()) {
@@ -29,8 +39,7 @@ test_that("collapseModuleBibs() skips .bib files with no entries", {
   ## the whole manual down. See PredictiveEcology/fireSenseManual#7.
   writeCommentBib(file.path("modules", "modB", "citations", "references_modB.bib"))
 
-  expect_message(out <- collapseModuleBibs(outFile = "citations/references.bib"),
-                 "no entries")
+  expect_message(out <- collapseModuleBibs(outFile = "citations/references.bib"), "no entries")
   expect_true(file.exists(out))
   expect_length(RefManageR::ReadBib(out), 1L)
   expect_setequal(names(RefManageR::ReadBib(out)), "Real:2017")
@@ -68,8 +77,10 @@ test_that("collapseModuleBibs() warns and writes an empty bibliography when noth
   localModules()
   writeCommentBib(file.path("modules", "modA", "citations", "references_modA.bib"))
 
-  expect_warning(out <- collapseModuleBibs(outFile = "citations/references.bib"),
-                 "no .bib file with any entries")
+  expect_warning(
+    out <- collapseModuleBibs(outFile = "citations/references.bib"),
+    "no .bib file with any entries"
+  )
   expect_true(file.exists(out))
   expect_equal(file.size(out), 0)
 })
@@ -84,7 +95,8 @@ test_that("collapseModuleBibs() returns the output path invisibly", {
 
 test_that("writePkgBib() writes entries for the packages it is given", {
   skip_if_not_installed("RefManageR")
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
 
   ## not base packages: `stats` and `utils` have no standalone citation, so
   ## write_bib() correctly produces nothing for them
@@ -95,13 +107,15 @@ test_that("writePkgBib() writes entries for the packages it is given", {
 })
 
 test_that("writePkgBib() creates the directory it writes into", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   writePkgBib("nested/deeper/packages.bib", packages = "knitr")
   expect_true(file.exists("nested/deeper/packages.bib"))
 })
 
 test_that("downloadCSL() keeps an existing style rather than re-fetching", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   dir.create("citations")
   writeLines("<style>not really a csl</style>", "citations/ecology-letters.csl")
 
@@ -111,7 +125,8 @@ test_that("downloadCSL() keeps an existing style rather than re-fetching", {
 })
 
 test_that("downloadCSL() returns the path it would write", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   dir.create("citations")
   file.create("citations/apa.csl")
   expect_identical(basename(downloadCSL("apa", "citations")), "apa.csl")
