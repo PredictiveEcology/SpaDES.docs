@@ -2,6 +2,14 @@
 
 ## SpaDES.docs (development version)
 
+- [`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)
+  no longer sets every manual’s environment variable name by default.
+  Each manual names the one its own chapters read, as
+  `manualVersion(legacy = "LANDR_MAN_VERSION")`; a build of one manual
+  previously exported `FIRESENSE_VERSION` and `LANDWEB_VERSION` as well.
+
+## SpaDES.docs 0.6.0
+
 Machinery that each of the three manuals had its own copy of is now
 shared, so a fix reaches all of them. The duplicates had already
 drifted: one manual’s chapter options set a CRAN repository, overriding

@@ -13,7 +13,7 @@ the environment."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ the environment."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>The manual's version, from its DESCRIPTION</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.6.0/R/building.R" class="external-link"><code>R/building.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/R/building.R" class="external-link"><code>R/building.R</code></a></small>
       <div class="d-none name"><code>manualVersion.Rd</code></div>
     </div>
 
@@ -56,7 +56,7 @@ the environment.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">manualVersion</span><span class="op">(</span></span>
 <span>  description <span class="op">=</span> <span class="st">"DESCRIPTION"</span>,</span>
 <span>  envVar <span class="op">=</span> <span class="st">"SPADES_MANUAL_VERSION"</span>,</span>
-<span>  legacy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LANDR_MAN_VERSION"</span>, <span class="st">"FIRESENSE_VERSION"</span>, <span class="st">"LANDWEB_VERSION"</span><span class="op">)</span></span>
+<span>  legacy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,7 +74,8 @@ the environment.</p>
 
 <dt id="arg-legacy">legacy<a class="anchor" aria-label="anchor" href="#arg-legacy"></a></dt>
 <dd><p>additional variable names to set to the same value, for
-documents that still read a manual-specific name. <code>NULL</code> for none.</p></dd>
+documents that still read a manual-specific name such as
+<code>LANDR_MAN_VERSION</code>. Empty by default.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -86,9 +87,10 @@ documents that still read a manual-specific name. <code>NULL</code> for none.</p
     <p>By field name, never by position. A manual that read <code>read.dcf(...)[4]</code> got
 <code>Version</code> only because it happened to be the fourth field, so adding any
 field above it would have printed the wrong string on the title page.</p>
-<p><code>envVar</code> is also set under the name each manual used before this was shared
-– <code>LANDR_MAN_VERSION</code>, <code>FIRESENSE_VERSION</code>, <code>LANDWEB_VERSION</code> – so a
-chapter or module <code>.Rmd</code> still reading one of those keeps working.</p>
+<p>A manual whose chapters still read a name of its own passes it as <code>legacy</code>,
+e.g. <code>manualVersion(legacy = "LANDR_MAN_VERSION")</code>. Nothing is set by
+default: setting every manual's name in every manual meant each one exported
+variables belonging to the others.</p>
     </div>
 
     <div class="section level2">

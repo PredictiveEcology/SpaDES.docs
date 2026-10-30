@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,11 +34,16 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.6.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="spadesdocs-development-version">SpaDES.docs (development version)<a class="anchor" aria-label="anchor" href="#spadesdocs-development-version"></a></h2>
+<ul><li>
+<code><a href="../reference/manualVersion.html">manualVersion()</a></code> no longer sets every manual’s environment variable name by default. Each manual names the one its own chapters read, as <code>manualVersion(legacy = "LANDR_MAN_VERSION")</code>; a build of one manual previously exported <code>FIRESENSE_VERSION</code> and <code>LANDWEB_VERSION</code> as well.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="spadesdocs-060">SpaDES.docs 0.6.0<a class="anchor" aria-label="anchor" href="#spadesdocs-060"></a></h2>
 <p>Machinery that each of the three manuals had its own copy of is now shared, so a fix reaches all of them. The duplicates had already drifted: one manual’s chapter options set a CRAN repository, overriding the one CI configures, and one removed dot-prefixed objects that its own build script had named with a dot so they would survive knitting.</p>
 <ul><li><p><code><a href="../reference/manualArchiveLinks.html">manualArchiveLinks()</a></code> returns the “previous versions” list for a manual’s landing page as markdown, built from the files present. It shares its listing with <code><a href="../reference/publishManualArchive.html">publishManualArchive()</a></code>, which writes the same versions as a page. The links point at the copies the site publishes rather than a repository’s raw files, which stop working if it is renamed or made private.</p></li>
 <li><p><code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> reports a line that begins with a text reference without being its own paragraph. bookdown reads any such line as a definition, while de-duplication here requires its own paragraph, because removing a mid-paragraph match would delete the sentence around it. A use that lands first on a line after wrapping therefore produced <code>Possibly duplicated text reference labels</code> from a build that had de-duplicated everything it could see, with nothing to say where it came from. The warning names the file, the line and the label; the fix is to re-wrap the module’s prose.</p></li>
