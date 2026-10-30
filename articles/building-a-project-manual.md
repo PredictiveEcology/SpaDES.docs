@@ -114,7 +114,7 @@ writeLines(head(readLines(chapters[1]), 8))
     #> ```{r setup-myModule, include = FALSE, eval = TRUE, cache = FALSE}
     #> knitr::opts_chunk$set(cache.rebuild = FALSE)
     #> knitr::opts_knit$set(SpaDES.docs.stageDir = '_manual_rmds/myModule')
-    #> knitr::opts_knit$set(root.dir = '/tmp/Rtmpu2h6hN/exampleProject/modules/myModule')
+    #> knitr::opts_knit$set(root.dir = '/tmp/RtmplGQzhb/exampleProject/modules/myModule')
     #> knitr::opts_chunk$set(echo = TRUE)
 
 ## What it does to each module `.Rmd`
