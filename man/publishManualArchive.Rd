@@ -40,3 +40,7 @@ hand, so it cannot drift. Versions are read from the file names, which are
 what \code{\link[=archiveManualPDF]{archiveManualPDF()}} writes: \verb{<prefix>-v<version>.pdf}. Anything not
 matching that shape is copied but left out of the ordering.
 }
+\seealso{
+\code{\link[=manualArchiveLinks]{manualArchiveLinks()}} to list the same versions inline, in a
+chapter.
+}

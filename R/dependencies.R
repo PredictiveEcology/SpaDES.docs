@@ -29,20 +29,22 @@
 #' @return the packages, invisibly.
 #'
 #' @export
-installModulePkgs <- function(modulePath = "modules", modules = NULL,
-                              dependencies = TRUE, install = TRUE) {
+installModulePkgs <- function(
+  modulePath = "modules",
+  modules = NULL,
+  dependencies = TRUE,
+  install = TRUE
+) {
   for (pkg in c("SpaDES.core", "Require")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
-      stop("installModulePkgs() needs the '", pkg, "' package to be installed.",
-           call. = FALSE)
+      stop("installModulePkgs() needs the '", pkg, "' package to be installed.", call. = FALSE)
     }
   }
   if (is.null(modules)) {
     modules <- list.files(modulePath)
   }
   if (!length(modules)) {
-    warning("installModulePkgs(): no modules found in '", modulePath, "'.",
-            call. = FALSE)
+    warning("installModulePkgs(): no modules found in '", modulePath, "'.", call. = FALSE)
     return(invisible(character(0)))
   }
 

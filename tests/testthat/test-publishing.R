@@ -1,6 +1,7 @@
 test_that("stagePagesFiles() writes .nojekyll into the published directory", {
   d <- withr::local_tempdir()
-  docs <- file.path(d, "docs"); dir.create(docs)
+  docs <- file.path(d, "docs")
+  dir.create(docs)
 
   expect_invisible(stagePagesFiles(docs))
   ## at the repository root it would never reach the deployed branch
@@ -10,7 +11,8 @@ test_that("stagePagesFiles() writes .nojekyll into the published directory", {
 
 test_that("stagePagesFiles() writes CNAME only when a domain is given", {
   d <- withr::local_tempdir()
-  docs <- file.path(d, "docs"); dir.create(docs)
+  docs <- file.path(d, "docs")
+  dir.create(docs)
 
   stagePagesFiles(docs)
   expect_false(file.exists(file.path(docs, "CNAME")))
@@ -21,7 +23,8 @@ test_that("stagePagesFiles() writes CNAME only when a domain is given", {
 
 test_that("stagePagesFiles() rejects a cname with a scheme", {
   d <- withr::local_tempdir()
-  docs <- file.path(d, "docs"); dir.create(docs)
+  docs <- file.path(d, "docs")
+  dir.create(docs)
   ## GitHub wants a bare domain; a URL here silently breaks the custom domain
   expect_error(stagePagesFiles(docs, cname = "https://example.org"), "bare domain")
 })
@@ -32,16 +35,21 @@ test_that("stagePagesFiles() errors when the book was not rendered", {
 })
 
 test_that("archiveManualPDF() does nothing when no PDF was produced", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   ## the HTML-only case: copying unconditionally returns FALSE and leaves nothing
-  expect_message(out <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
-                 "nothing archived")
+  expect_message(
+    out <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
+    "nothing archived"
+  )
   expect_null(out)
 })
 
 test_that("archiveManualPDF() copies to a versioned name", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
-  dir.create("docs"); writeLines("x", "docs/Manual.pdf")
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  dir.create("docs")
+  writeLines("x", "docs/Manual.pdf")
 
   out <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual")
   expect_true(file.exists(out))
@@ -49,7 +57,8 @@ test_that("archiveManualPDF() copies to a versioned name", {
 })
 
 test_that("archiveManualPDF() leaves an already archived version alone", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   dir.create("docs")
 
   writeLines("the release", "docs/Manual.pdf")
@@ -58,16 +67,20 @@ test_that("archiveManualPDF() leaves an already archived version alone", {
   ## a later build at the same version: a PDF is never byte-identical across
   ## runs, so this stands in for the new creation date xelatex stamps in
   writeLines("a rebuild of the same version", "docs/Manual.pdf")
-  expect_message(again <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
-                 "already archived")
+  expect_message(
+    again <- archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
+    "already archived"
+  )
 
   expect_identical(again, out)
   expect_identical(readLines(out), "the release")
 })
 
 test_that("archiveManualPDF() refuses an empty version", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
-  dir.create("docs"); writeLines("x", "docs/Manual.pdf")
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  dir.create("docs")
+  writeLines("x", "docs/Manual.pdf")
   ## Sys.getenv() of an unset variable returns "", which would archive
   ## "LandR-manual-v.pdf" over the previous build
   expect_error(archiveManualPDF("docs/Manual.pdf", "", "LandR-manual"), "`version` is empty")
@@ -75,18 +88,23 @@ test_that("archiveManualPDF() refuses an empty version", {
 
 makeArchive <- function(dir, versions, prefix = "Test-manual") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  for (v in versions) writeLines("x", file.path(dir, sprintf("%s-v%s.pdf", prefix, v)))
+  for (v in versions) {
+    writeLines("x", file.path(dir, sprintf("%s-v%s.pdf", prefix, v)))
+  }
 }
 
 test_that("publishManualArchive() copies the PDFs and indexes them newest first", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
   dir.create("docs")
 
   idx <- publishManualArchive("archive/pdf", "docs", "Test Manual")
   expect_true(file.exists(idx))
-  expect_setequal(list.files("docs/archive/pdf"),
-                  c("Test-manual-v1.0.0.pdf", "Test-manual-v1.0.10.pdf", "Test-manual-v1.0.2.pdf"))
+  expect_setequal(
+    list.files("docs/archive/pdf"),
+    c("Test-manual-v1.0.0.pdf", "Test-manual-v1.0.10.pdf", "Test-manual-v1.0.2.pdf")
+  )
 
   html <- paste(readLines(idx), collapse = "\n")
   ## numeric_version ordering, not string ordering: 1.0.10 is newer than 1.0.2
@@ -95,24 +113,30 @@ test_that("publishManualArchive() copies the PDFs and indexes them newest first"
 })
 
 test_that("publishManualArchive() does nothing when there is no archive", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   dir.create("docs")
-  expect_message(out <- publishManualArchive("archive/pdf", "docs", "Test Manual"),
-                 "nothing published")
+  expect_message(
+    out <- publishManualArchive("archive/pdf", "docs", "Test Manual"),
+    "nothing published"
+  )
   expect_null(out)
 })
 
 test_that("publishManualArchive() does nothing when the archive is empty", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
-  dir.create("archive/pdf", recursive = TRUE); dir.create("docs")
-  expect_message(out <- publishManualArchive("archive/pdf", "docs", "Test Manual"),
-                 "no PDFs")
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  dir.create("archive/pdf", recursive = TRUE)
+  dir.create("docs")
+  expect_message(out <- publishManualArchive("archive/pdf", "docs", "Test Manual"), "no PDFs")
   expect_null(out)
 })
 
 test_that("publishManualArchive() names the manual in the page", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
-  makeArchive("archive/pdf", "2.1.0"); dir.create("docs")
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  makeArchive("archive/pdf", "2.1.0")
+  dir.create("docs")
   idx <- publishManualArchive("archive/pdf", "docs", "LandR Manual")
   html <- paste(readLines(idx), collapse = "\n")
   expect_match(html, "LandR Manual &mdash; archived versions")
@@ -123,25 +147,88 @@ test_that("publishManualArchive() names the manual in the page", {
 ## evidence that the deploy got what it needed, not something to infer.
 
 test_that("stagePagesFiles() reports what it wrote", {
-  d <- withr::local_tempdir(); docs <- file.path(d, "docs"); dir.create(docs)
+  d <- withr::local_tempdir()
+  docs <- file.path(d, "docs")
+  dir.create(docs)
   expect_message(stagePagesFiles(docs), "wrote \\.nojekyll")
   expect_message(stagePagesFiles(docs, cname = "example.org"), "CNAME \\(example\\.org\\)")
 })
 
 test_that("archiveManualPDF() reports what it archived", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
-  dir.create("docs"); writeLines("x", "docs/Manual.pdf")
-  expect_message(archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
-                 "archived 'LandR-manual-v1\\.0\\.4\\.pdf'")
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  dir.create("docs")
+  writeLines("x", "docs/Manual.pdf")
+  expect_message(
+    archiveManualPDF("docs/Manual.pdf", "1.0.4", "LandR-manual"),
+    "archived 'LandR-manual-v1\\.0\\.4\\.pdf'"
+  )
 })
 
 test_that("publishManualArchive() reports how many it published", {
-  d <- withr::local_tempdir(); withr::local_dir(d)
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
   makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
   dir.create("docs")
-  expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"),
-                 "published 3 archived PDF")
+  expect_message(
+    publishManualArchive("archive/pdf", "docs", "Test Manual"),
+    "published 3 archived PDF"
+  )
   ## and names the newest, so a stale archive is visible in the log
-  expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"),
-                 "newest v1\\.0\\.10")
+  expect_message(publishManualArchive("archive/pdf", "docs", "Test Manual"), "newest v1\\.0\\.10")
+})
+
+test_that("manualArchiveLinks() lists the archived versions newest first", {
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.0.10", "1.0.2"))
+
+  links <- manualArchiveLinks(manualName = "Test manual", exclude = NULL)
+
+  expect_identical(
+    links,
+    c(
+      "-   [Test manual v1.0.10](archive/pdf/Test-manual-v1.0.10.pdf)\n",
+      "-   [Test manual v1.0.2](archive/pdf/Test-manual-v1.0.2.pdf)\n",
+      "-   [Test manual v1.0.0](archive/pdf/Test-manual-v1.0.0.pdf)\n"
+    )
+  )
+})
+
+test_that("manualArchiveLinks() leaves out the version being built", {
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.3", "1.0.4"))
+
+  links <- manualArchiveLinks(manualName = "Test manual", exclude = "1.0.4")
+
+  expect_length(links, 1L)
+  expect_match(links, "v1.0.3", fixed = TRUE)
+})
+
+test_that("manualArchiveLinks() returns nothing when there is no archive", {
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+
+  expect_length(manualArchiveLinks(manualName = "Test manual"), 0L)
+})
+
+test_that("manualArchiveLinks() is empty when the only archive is the version being built", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  ## a manual's first release: the one archived PDF is the current version, so
+  ## there are no *previous* versions to list
+  makeArchive("archive/pdf", "1.0.0")
+
+  expect_length(manualArchiveLinks(manualName = "Test manual", exclude = "1.0.0"), 0L)
+})
+
+test_that("manualArchiveLinks() takes the version to exclude from the environment", {
+  d <- withr::local_tempdir(); withr::local_dir(d)
+  makeArchive("archive/pdf", c("1.0.0", "1.1.0"))
+  withr::local_envvar(SPADES_MANUAL_VERSION = "1.1.0")
+
+  links <- manualArchiveLinks(manualName = "Test manual")
+
+  expect_length(links, 1L)
+  expect_match(links, "v1.0.0", fixed = TRUE)
 })

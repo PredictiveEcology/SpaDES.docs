@@ -49,7 +49,7 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
 addLabel <- function(caption = "", tag = "tab") {
   chunkLabel <- opts_current$get("label")
   pretag <- if (is_latex_output()) {
-    paste0("\\label{", tag, ":",chunkLabel , "}")
+    paste0("\\label{", tag, ":", chunkLabel, "}")
   } else {
     paste0("(\\#", tag, ":", chunkLabel, ")")
   }
@@ -96,11 +96,15 @@ addLabel <- function(caption = "", tag = "tab") {
 #' @importFrom kableExtra kable_styling landscape column_spec
 #' @importFrom pander pander panderOptions
 
-panble <- function(tab, caption = "",
-                   landscape = FALSE,
-                   panderArgs = list(), kableArgs = list(),
-                   kable_stylingArgs = list(), column_specArgs = list()) {
-
+panble <- function(
+  tab,
+  caption = "",
+  landscape = FALSE,
+  panderArgs = list(),
+  kableArgs = list(),
+  kable_stylingArgs = list(),
+  column_specArgs = list()
+) {
   ## check that chunk results must be 'asis'
   if (isFALSE(knitr::opts_current$get("results") == "asis")) {
     stop("Please use chunk option results = 'asis'")
@@ -139,4 +143,3 @@ panble <- function(tab, caption = "",
     return(outTable)
   }
 }
-

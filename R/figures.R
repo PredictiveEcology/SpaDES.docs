@@ -54,25 +54,38 @@
 #' cat(paste0("[![module-version](", stageFigure("figures/moduleVersionBadge.png"),
 #'            ")](https://github.com/PredictiveEcology/Biomass_core)"))
 #' }
-stageFigure <- function(path,
-                        stageDir = knitr::opts_knit$get("SpaDES.docs.stageDir"),
-                        outputDir = knitr::opts_knit$get("output.dir")) {
+stageFigure <- function(
+  path,
+  stageDir = knitr::opts_knit$get("SpaDES.docs.stageDir"),
+  outputDir = knitr::opts_knit$get("output.dir")
+) {
   ## checked in both modes, so a caller that turns knitr's own check off -- as
   ## includeFigure() has to -- loses nothing by it
   missing <- path[!file.exists(path)]
   if (length(missing)) {
-    stop("stageFigure(): no figure at ", paste0("'", missing, "'", collapse = ", "),
-         ", relative to '", getwd(), "'. A figure fetched at render time must be ",
-         "written before it is staged.", call. = FALSE)
+    stop(
+      "stageFigure(): no figure at ",
+      paste0("'", missing, "'", collapse = ", "),
+      ", relative to '",
+      getwd(),
+      "'. A figure fetched at render time must be ",
+      "written before it is staged.",
+      call. = FALSE
+    )
   }
 
   if (is.null(stageDir) || !nzchar(stageDir)) {
     return(path)
   }
   if (is.null(outputDir) || !nzchar(outputDir)) {
-    stop("stageFigure(): the chapter is staged into '", stageDir, "', but knitr ",
-         "does not say where the document is rendered, so there is nowhere to ",
-         "copy to.", call. = FALSE)
+    stop(
+      "stageFigure(): the chapter is staged into '",
+      stageDir,
+      "', but knitr ",
+      "does not say where the document is rendered, so there is nowhere to ",
+      "copy to.",
+      call. = FALSE
+    )
   }
 
   ## the reference is resolved against the rendered document, not the module, so
@@ -84,9 +97,14 @@ stageFigure <- function(path,
   }
   copied <- file.copy(path, dest, overwrite = TRUE)
   if (!all(copied)) {
-    stop("stageFigure(): could not copy ",
-         paste0("'", path[!copied], "'", collapse = ", "),
-         " into '", file.path(outputDir, stageDir), "'", call. = FALSE)
+    stop(
+      "stageFigure(): could not copy ",
+      paste0("'", path[!copied], "'", collapse = ", "),
+      " into '",
+      file.path(outputDir, stageDir),
+      "'",
+      call. = FALSE
+    )
   }
   ref
 }
