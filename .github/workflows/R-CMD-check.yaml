@@ -6,6 +6,13 @@ on:
     branches: [main, development]
   pull_request:
     branches: [main, development]
+  ## so a run can be retriggered without a commit. A matrix job that never gets
+  ## scheduled leaves the run reported as failed and not retryable -- GitHub
+  ## refuses "cannot be rerun" while a job sits queued -- and without this the
+  ## only way to get a clean result on a branch was to push something to it.
+  ## This has blocked two releases: a cancelled macOS leg on 0.5.1 and an
+  ## unscheduled nosuggests leg on 0.6.1.
+  workflow_dispatch:
 
 name: R-CMD-check
 
