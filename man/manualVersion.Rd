@@ -7,7 +7,7 @@
 manualVersion(
   description = "DESCRIPTION",
   envVar = "SPADES_MANUAL_VERSION",
-  legacy = c("LANDR_MAN_VERSION", "FIRESENSE_VERSION", "LANDWEB_VERSION")
+  legacy = character(0)
 )
 }
 \arguments{
@@ -16,7 +16,8 @@ manualVersion(
 \item{envVar}{name of the environment variable to set.}
 
 \item{legacy}{additional variable names to set to the same value, for
-documents that still read a manual-specific name. \code{NULL} for none.}
+documents that still read a manual-specific name such as
+\code{LANDR_MAN_VERSION}. Empty by default.}
 }
 \value{
 the version string, invisibly.
@@ -32,9 +33,10 @@ By field name, never by position. A manual that read \code{read.dcf(...)[4]} got
 \code{Version} only because it happened to be the fourth field, so adding any
 field above it would have printed the wrong string on the title page.
 
-\code{envVar} is also set under the name each manual used before this was shared
--- \code{LANDR_MAN_VERSION}, \code{FIRESENSE_VERSION}, \code{LANDWEB_VERSION} -- so a
-chapter or module \code{.Rmd} still reading one of those keeps working.
+A manual whose chapters still read a name of its own passes it as \code{legacy},
+e.g. \code{manualVersion(legacy = "LANDR_MAN_VERSION")}. Nothing is set by
+default: setting every manual's name in every manual meant each one exported
+variables belonging to the others.
 }
 \examples{
 \dontrun{

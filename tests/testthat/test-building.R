@@ -40,6 +40,24 @@ test_that("manualVersion() reads Version by field, not by position", {
   expect_identical(Sys.getenv("LANDWEB_VERSION"), "2.3.4")
 })
 
+test_that("manualVersion() sets no manual-specific name unless asked", {
+  d <- withr::local_tempdir()
+  withr::local_dir(d)
+  writeLines(c("Package: aManual", "Version: 2.3.4"), "DESCRIPTION")
+  withr::local_envvar(
+    SPADES_MANUAL_VERSION = NA, LANDR_MAN_VERSION = NA,
+    FIRESENSE_VERSION = NA, LANDWEB_VERSION = NA
+  )
+
+  manualVersion()
+
+  ## one manual must not export the names belonging to the others
+  expect_identical(Sys.getenv("SPADES_MANUAL_VERSION"), "2.3.4")
+  expect_identical(Sys.getenv("LANDR_MAN_VERSION"), "")
+  expect_identical(Sys.getenv("FIRESENSE_VERSION"), "")
+  expect_identical(Sys.getenv("LANDWEB_VERSION"), "")
+})
+
 test_that("manualVersion() refuses a DESCRIPTION with no version", {
   d <- withr::local_tempdir()
   withr::local_dir(d)

@@ -63,16 +63,18 @@ manualChunkOptions <- function(width = 60) {
 #' `Version` only because it happened to be the fourth field, so adding any
 #' field above it would have printed the wrong string on the title page.
 #'
-#' `envVar` is also set under the name each manual used before this was shared
-#' -- `LANDR_MAN_VERSION`, `FIRESENSE_VERSION`, `LANDWEB_VERSION` -- so a
-#' chapter or module `.Rmd` still reading one of those keeps working.
+#' A manual whose chapters still read a name of its own passes it as `legacy`,
+#' e.g. `manualVersion(legacy = "LANDR_MAN_VERSION")`. Nothing is set by
+#' default: setting every manual's name in every manual meant each one exported
+#' variables belonging to the others.
 #'
 #' @param description path to the DESCRIPTION file to read.
 #'
 #' @param envVar name of the environment variable to set.
 #'
 #' @param legacy additional variable names to set to the same value, for
-#'  documents that still read a manual-specific name. `NULL` for none.
+#'  documents that still read a manual-specific name such as
+#'  `LANDR_MAN_VERSION`. Empty by default.
 #'
 #' @return the version string, invisibly.
 #'
@@ -86,7 +88,7 @@ manualChunkOptions <- function(width = 60) {
 manualVersion <- function(
   description = "DESCRIPTION",
   envVar = "SPADES_MANUAL_VERSION",
-  legacy = c("LANDR_MAN_VERSION", "FIRESENSE_VERSION", "LANDWEB_VERSION")
+  legacy = character(0)
 ) {
   if (!file.exists(description)) {
     stop("manualVersion(): no DESCRIPTION at '", description, "'.", call. = FALSE)
