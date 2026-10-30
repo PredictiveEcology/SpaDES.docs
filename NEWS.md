@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.6.1
 
 * `manualVersion()` no longer sets every manual's environment variable name by
   default. Each manual names the one its own chapters read, as
