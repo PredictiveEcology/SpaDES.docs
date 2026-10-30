@@ -20,12 +20,12 @@ Source:
 
 Chubaty A, Barros C, McIntire E (2026). *SpaDES.docs: Helper Utilities
 for Creating SpaDES Module Documentation and Manuals*. R package version
-0.6.0.9000, <https://predictiveecology.github.io/SpaDES.docs/>.
+0.6.1, <https://predictiveecology.github.io/SpaDES.docs/>.
 
     @Manual{,
       title = {SpaDES.docs: Helper Utilities for Creating SpaDES Module Documentation and Manuals},
       author = {Alex M Chubaty and Ceres Barros and Eliot J B McIntire},
       year = {2026},
-      note = {R package version 0.6.0.9000},
+      note = {R package version 0.6.1},
       url = {https://predictiveecology.github.io/SpaDES.docs/},
     }

@@ -1,6 +1,6 @@
 # Changelog
 
-## SpaDES.docs (development version)
+## SpaDES.docs 0.6.1
 
 - [`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)
   no longer sets every manual’s environment variable name by default.
