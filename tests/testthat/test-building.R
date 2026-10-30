@@ -56,6 +56,7 @@ test_that("manualVersion() says where it looked when there is no DESCRIPTION", {
 })
 
 test_that("renderManual() errors when the site itself did not render", {
+  skip_if_not_installed("bookdown")
   d <- withr::local_tempdir()
   withr::local_dir(d)
   dir.create("docs")
@@ -66,6 +67,7 @@ test_that("renderManual() errors when the site itself did not render", {
 })
 
 test_that("renderManual() keeps a site that rendered when a later format fails", {
+  skip_if_not_installed("bookdown")
   d <- withr::local_tempdir()
   withr::local_dir(d)
   dir.create("docs")
@@ -86,6 +88,7 @@ test_that("renderManual() keeps a site that rendered when a later format fails",
 })
 
 test_that("renderManual() does not accept a stale site from an earlier build", {
+  skip_if_not_installed("bookdown")
   d <- withr::local_tempdir()
   withr::local_dir(d)
   dir.create("docs")
@@ -96,6 +99,7 @@ test_that("renderManual() does not accept a stale site from an earlier build", {
 })
 
 test_that("renderManual() reports success when every format rendered", {
+  skip_if_not_installed("bookdown")
   d <- withr::local_tempdir()
   withr::local_dir(d)
   dir.create("docs")
