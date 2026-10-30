@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,29 +60,32 @@
       <h1>Building a continuously updated manual</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.5.1/vignettes/building-a-continuously-updated-manual.Rmd" class="external-link"><code>vignettes/building-a-continuously-updated-manual.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/vignettes/building-a-continuously-updated-manual.Rmd" class="external-link"><code>vignettes/building-a-continuously-updated-manual.Rmd</code></a></small>
       <div class="d-none name"><code>building-a-continuously-updated-manual.Rmd</code></div>
     </div>
 
     
     
-<p>There are two kinds of manual in this ecosystem, and they want
-opposite things from their modules.</p>
+<p>A manual either pins the modules it documents or tracks them, and
+that choice determines the rest of its setup.</p>
 <p>A <strong>project manual</strong> documents the modules <em>as a
-particular project used them</em>. It should pin them, so the manual and
-the results it describes agree. That is the subject of
-<code><a href="../articles/building-a-project-manual.html">vignette("building-a-project-manual")</a></code>, and <a href="https://github.com/PredictiveEcology/LandWeb" class="external-link">LandWeb</a> is the
+particular project used them</em>, so it pins them and the manual agrees
+with the results it describes. See
+<code><a href="../articles/building-a-project-manual.html">vignette("building-a-project-manual")</a></code>; <a href="https://github.com/PredictiveEcology/LandWeb" class="external-link">LandWeb</a> is the
 example.</p>
 <p>A <strong>continuously updated manual</strong> documents the modules
-<em>as they are now</em>. It should track them, so a documentation fix
-reaches the published site without anyone republishing the manual. <a href="https://github.com/PredictiveEcology/fireSenseManual" class="external-link">fireSenseManual</a>
-and <a href="https://github.com/PredictiveEcology/LandR-Manual" class="external-link">LandR-Manual</a>
-are those, and this vignette is about them.</p>
-<p>The distinction decides almost everything else. A git submodule
-records a <em>commit</em>: a state. A manual that tracks development
-wants to record an <em>intent</em> – “whatever <code>development</code>
-says today”. Every gap between the two has to be closed by a person
-bumping a pointer, which is the chore this arrangement removes.</p>
+<em>as they are now</em>, so it tracks them and a documentation fix
+reaches the published site without anyone republishing the manual. This
+vignette covers that arrangement, as used by <a href="https://github.com/PredictiveEcology/LandR-Manual" class="external-link">LandR-Manual</a>
+and <a href="https://github.com/PredictiveEcology/fireSenseManual" class="external-link">fireSenseManual</a>.</p>
+<p>A git submodule records a commit, so keeping it current means someone
+bumping a pointer for every module change. Checking the modules out by
+branch in CI records the branch instead, and each build resolves it to
+whatever that branch points at that day.</p>
+<p>Setting one up means a repository holding the book, a workflow that
+fetches the modules and deploys the rendered site, a build script that
+assembles the chapters and bibliography, and – if the manual has
+releases – an archive of released PDFs.</p>
 <div class="section level2">
 <h2 id="the-shape">The shape<a class="anchor" aria-label="anchor" href="#the-shape"></a>
 </h2>
@@ -97,7 +100,7 @@ output:</p>
   DESCRIPTION            # so install.R can resolve the manual's own deps
   modules/               # fetched by CI; gitignored
   _manual_rmds/          # generated chapters; gitignored
-  docs/                  # rendered output, deployed to a gh-pages branch
+  docs/                  # rendered output, deployed to the published branch (gh-pages)
   .github/workflows/</code></pre>
 </div>
 <div class="section level2">
@@ -123,10 +126,18 @@ and there is no custom code to maintain.</p>
 <p>Use <code>github.event.inputs</code>, not the <code>inputs</code>
 context, so the expression is <code>null</code> rather than an error on
 <code>push</code> and <code>schedule</code> events.</p>
-<p>A module whose branches differ from the rest overrides the default in
-its own step. This is not hypothetical:
-<code>Biomass_validationKNN</code>’s <code>main</code> is ahead of its
-<code>development</code>, the opposite of the other LandR modules.</p>
+<p>A module whose branches differ from the rest can override the default
+in its own step – but prefer fixing the module.
+<code>Biomass_validationKNN</code> was checked out at <code>main</code>
+for a year because work there had resumed directly on <code>main</code>,
+leaving its <code>development</code> 12 commits behind; the exception
+then had to be remembered every time <code>MODULE_REF</code> was
+considered. Merging <code>main</code> back into <code>development</code>
+let the exception go, and <code>MODULE_REF</code> covers every module
+again.</p>
+<p>Nothing detects the situation that made the exception necessary: a
+module whose <code>development</code> has quietly fallen behind its
+<code>main</code> builds perfectly, from stale sources.</p>
 <p>Because nothing in the repository records which commits a build used,
 have the workflow write them out:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Record module versions</span></span>
@@ -151,22 +162,44 @@ modules are on disk:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/manualPaths.html">manualPaths</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/manualVersion.html">manualVersion</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># index.Rmd's subtitle reads it from the environment</span></span>
+<span></span>
 <span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/writePkgBib.html">writePkgBib</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="st">"packages.bib"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/downloadCSL.html">downloadCSL</a></span><span class="op">(</span><span class="st">"ecology-letters"</span>, <span class="va">paths</span><span class="op">$</span><span class="va">citations</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## references.bib is OUTPUT ONLY -- see the note below</span></span>
 <span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/collapseModuleBibs.html">collapseModuleBibs</a></span><span class="op">(</span></span>
 <span>  modulePath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">prj</span>, <span class="st">"modules"</span><span class="op">)</span>,</span>
-<span>  extraBibs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"packages.bib"</span>, <span class="st">"references.bib"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  extraBibs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"packages.bib"</span>, <span class="st">"references_manual.bib"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  outFile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">citations</span>, <span class="st">"references.bib"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">chapters</span> <span class="op">&lt;-</span> <span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/prepManualRmds.html">prepManualRmds</a></span><span class="op">(</span><span class="st">"./modules"</span>, rebuildCache <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">bookdown</span><span class="fu">::</span><span class="fu">render_book</span><span class="op">(</span>output_format <span class="op">=</span> <span class="st">"all"</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/renderManual.html">renderManual</a></span><span class="op">(</span>outputDir <span class="op">=</span> <span class="va">paths</span><span class="op">$</span><span class="va">docs</span>, output_format <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## these must be inside the published directory, not at the repository root</span></span>
 <span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/stagePagesFiles.html">stagePagesFiles</a></span><span class="op">(</span><span class="va">paths</span><span class="op">$</span><span class="va">docs</span>, cname <span class="op">=</span> <span class="st">"example.predictiveecology.org"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="st">"_manual_rmds"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">chapters</span><span class="op">)</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Use <code><a href="../reference/renderManual.html">renderManual()</a></code> rather than
+<code><a href="https://pkgs.rstudio.com/bookdown/reference/render_book.html" class="external-link">bookdown::render_book()</a></code> directly. bookdown knits once and
+then writes each declared format in turn, so the website is already on
+disk when a later format fails, and letting that failure propagate
+discards it along with the deploy that would have published it.
+<code><a href="../reference/renderManual.html">renderManual()</a></code> reports the failure as a GitHub Actions
+warning and still requires the site itself, so a format that cannot be
+built costs only that format.</p>
+<p>Declare the fragile formats <strong>last</strong> in
+<code>_output.yml</code>, for the same reason: the formats are written
+in declaration order and a failure stops the rest, so a PDF in the
+middle costs the EPUB after it too.</p>
+<p>Keep the output bibliography out of its own <code>extraBibs</code>:
+listing it there merges the file into itself on every build,
+accumulating RefManageR’s <code>:1</code>-suffixed duplicates of every
+entry. Put curated entries in a tracked file of their own and treat the
+assembled one as disposable, which it has to be –
+<code>citations/</code> is generated and starts empty on CI.</p>
 </div>
 <div class="section level2">
 <h2 id="deploying">Deploying<a class="anchor" aria-label="anchor" href="#deploying"></a>
@@ -217,9 +250,10 @@ cost is not worth the freshness.</p>
 <div class="section level2">
 <h2 id="releases-and-keeping-the-old-pdfs">Releases, and keeping the old PDFs<a class="anchor" aria-label="anchor" href="#releases-and-keeping-the-old-pdfs"></a>
 </h2>
-<p>A manual that tracks <code>development</code> is never “a version” of
-anything. A release is the other build: pinned refs, a version number,
-and a PDF that stays available after the site has moved on.</p>
+<p>A manual that tracks a branch has no version of its own: it describes
+whatever the modules say today. A release is the other build, with
+pinned refs, a version number, and a PDF that stays available after the
+site has moved on.</p>
 <p>Keep the released PDFs in version control, under
 <code>archive/pdf/</code>, and publish them with the site rather than
 leaving them on the published branch. That branch is rebuilt by every
@@ -254,26 +288,77 @@ nothing has to be edited when a release is cut.</p>
 </h3>
 <p>Have the workflow do it, so a release does not depend on someone
 remembering:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Archive the release PDF</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="at">        </span><span class="fu">if</span><span class="kw">:</span><span class="at"> github.event_name != 'pull_request'</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="at">          </span><span class="fu">GH_TOKEN</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">        run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>          set -euo pipefail</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>          if [ -z "$(git status --porcelain archive/pdf)" ]; then</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>            echo "No newly archived PDF; nothing to commit."</span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>            exit 0</span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>          fi</span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>          git config --local user.name "github-actions[bot]"</span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"</span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>          git add archive/pdf</span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>          git commit -m "Archive the manual PDF"</span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \</span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>            "HEAD:${GITHUB_REF_NAME}"</span></code></pre></div>
-<p>This is self-gating: <code><a href="../reference/archiveManualPDF.html">archiveManualPDF()</a></code> writes a file
-only when a PDF was rendered and that version is not already archived,
-so the step is a no-op on ordinary builds and needs no separate release
-trigger.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co">      ## after the deploy, never before it -- see below</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Archive the release PDF</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="at">        </span><span class="fu">if</span><span class="kw">:</span><span class="at"> github.event_name != 'pull_request'</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="at">          </span><span class="fu">GH_TOKEN</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">        run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>          set -euo pipefail</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>          ## '??' is untracked: a version not in the repository before. A</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>          ## modified tracked file is a re-render of a version already archived</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>          if [ -z "$(git status --porcelain archive/pdf | grep '^??' || true)" ]; then</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>            echo "No newly archived PDF; nothing to commit."</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>            git checkout -- archive/pdf 2&gt;/dev/null || true</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>            exit 0</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>          fi</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>          git checkout -- archive/pdf 2&gt;/dev/null || true</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>          version="$(Rscript -e 'cat(read.dcf("DESCRIPTION", fields = "Version")[1])')"</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>          branch="archive/pdf-v${version}"</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>          if gh pr list --head "${branch}" --state open --json number --jq 'length' \</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>               | grep -qv '^0$'; then</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>            echo "A pull request for ${branch} is already open."</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>            exit 0</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>          fi</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a>          git config --local user.name "github-actions[bot]"</span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a>          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"</span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a>          git checkout -b "${branch}"</span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a>          git add archive/pdf</span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a>          git commit -m "Archive the manual PDF for v${version}"</span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>          git push --force \</span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \</span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>            "HEAD:refs/heads/${branch}"</span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a>          gh pr create --base "${GITHUB_REF_NAME}" --head "${branch}" \</span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a>            --title "Archive the manual PDF for v${version}"</span></code></pre></div>
+<p>Three parts of that need to stay as they are.</p>
+<p><strong>Open a pull request; do not push.</strong> A ruleset on the
+default branch refuses a direct push, with
+<code>GH006: Changes must be made through a pull request</code>. Note
+also that the step is gated
+<code>if: github.event_name != 'pull_request'</code>, so no pull request
+build runs it: whatever it does is first exercised by a merge, and
+should be read carefully rather than trusted to a green check.</p>
+<p><strong>Test for an untracked file, not for any change.</strong> A
+PDF is not reproducible byte for byte – xelatex stamps a creation date
+and a document ID into each run – so
+<code>git status --porcelain archive/pdf</code> reports a modification
+after every build, and a check for any change opens a pull request every
+night. Requires SpaDES.docs &gt;= 0.5.1, which leaves an
+already-archived version alone; this check covers the case where
+something else rewrites the file.</p>
+<p><strong>Put it after the deploy.</strong> A failure here must not
+stop the site from updating, which is what happens when it runs first:
+nothing handling a secondary artifact should be able to withhold the
+primary one.</p>
+</div>
+<div class="section level3">
+<h3 id="linking-the-versions">Linking the versions<a class="anchor" aria-label="anchor" href="#linking-the-versions"></a>
+</h3>
+<p><code>bs4_book</code> has no download menu:
+<code>download: ["pdf", "epub"]</code> is a <code>gitbook</code> option,
+accepted and ignored under <code><a href="https://pkgs.rstudio.com/bookdown/reference/bs4_book.html" class="external-link">bookdown::bs4_book</a></code>, so setting
+it publishes the files with nothing pointing at them. Link them from the
+landing page:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## in index.Rmd, in a `results = "asis"` chunk</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">SpaDES.docs</span><span class="fu">::</span><span class="fu"><a href="../reference/manualArchiveLinks.html">manualArchiveLinks</a></span><span class="op">(</span>manualName <span class="op">=</span> <span class="st">"My Manual"</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/manualArchiveLinks.html">manualArchiveLinks()</a></code> lists the archived releases newest
+first, from the files present, excluding the version being built. For
+the current build’s own PDF and EPUB, take the formats from
+<code>_output.yml</code> rather than testing for the files:
+<code>bs4_book</code> renders first, so neither file exists yet when
+<code>index.Rmd</code> is knitted, and a test for them drops the links
+from every build.</p>
 </div>
 <div class="section level3">
 <h3 id="do-not-use-clean-exclude-for-this">Do not use <code>clean-exclude</code> for this<a class="anchor" aria-label="anchor" href="#do-not-use-clean-exclude-for-this"></a>

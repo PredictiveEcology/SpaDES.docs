@@ -1,27 +1,30 @@
 # Building a continuously updated manual
 
-There are two kinds of manual in this ecosystem, and they want opposite
-things from their modules.
+A manual either pins the modules it documents or tracks them, and that
+choice determines the rest of its setup.
 
 A **project manual** documents the modules *as a particular project used
-them*. It should pin them, so the manual and the results it describes
-agree. That is the subject of
-[`vignette("building-a-project-manual")`](https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.md),
-and [LandWeb](https://github.com/PredictiveEcology/LandWeb) is the
-example.
+them*, so it pins them and the manual agrees with the results it
+describes. See
+[`vignette("building-a-project-manual")`](https://predictiveecology.github.io/SpaDES.docs/articles/building-a-project-manual.md);
+[LandWeb](https://github.com/PredictiveEcology/LandWeb) is the example.
 
 A **continuously updated manual** documents the modules *as they are
-now*. It should track them, so a documentation fix reaches the published
-site without anyone republishing the manual.
-[fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual)
-and [LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual)
-are those, and this vignette is about them.
+now*, so it tracks them and a documentation fix reaches the published
+site without anyone republishing the manual. This vignette covers that
+arrangement, as used by
+[LandR-Manual](https://github.com/PredictiveEcology/LandR-Manual) and
+[fireSenseManual](https://github.com/PredictiveEcology/fireSenseManual).
 
-The distinction decides almost everything else. A git submodule records
-a *commit*: a state. A manual that tracks development wants to record an
-*intent* – “whatever `development` says today”. Every gap between the
-two has to be closed by a person bumping a pointer, which is the chore
-this arrangement removes.
+A git submodule records a commit, so keeping it current means someone
+bumping a pointer for every module change. Checking the modules out by
+branch in CI records the branch instead, and each build resolves it to
+whatever that branch points at that day.
+
+Setting one up means a repository holding the book, a workflow that
+fetches the modules and deploys the rendered site, a build script that
+assembles the chapters and bibliography, and – if the manual has
+releases – an archive of released PDFs.
 
 ## The shape
 
@@ -37,7 +40,7 @@ output:
       DESCRIPTION            # so install.R can resolve the manual's own deps
       modules/               # fetched by CI; gitignored
       _manual_rmds/          # generated chapters; gitignored
-      docs/                  # rendered output, deployed to a gh-pages branch
+      docs/                  # rendered output, deployed to the published branch (gh-pages)
       .github/workflows/
 
 ## Fetching the modules
@@ -66,9 +69,17 @@ jobs:
 Use `github.event.inputs`, not the `inputs` context, so the expression
 is `null` rather than an error on `push` and `schedule` events.
 
-A module whose branches differ from the rest overrides the default in
-its own step. This is not hypothetical: `Biomass_validationKNN`’s `main`
-is ahead of its `development`, the opposite of the other LandR modules.
+A module whose branches differ from the rest can override the default in
+its own step – but prefer fixing the module. `Biomass_validationKNN` was
+checked out at `main` for a year because work there had resumed directly
+on `main`, leaving its `development` 12 commits behind; the exception
+then had to be remembered every time `MODULE_REF` was considered.
+Merging `main` back into `development` let the exception go, and
+`MODULE_REF` covers every module again.
+
+Nothing detects the situation that made the exception necessary: a
+module whose `development` has quietly fallen behind its `main` builds
+perfectly, from stale sources.
 
 Because nothing in the repository records which commits a build used,
 have the workflow write them out:
@@ -99,23 +110,50 @@ SpaDES.docs::installModulePkgs("modules")
 
 paths <- SpaDES.docs::manualPaths()
 
+SpaDES.docs::manualVersion()   # index.Rmd's subtitle reads it from the environment
+
 SpaDES.docs::writePkgBib(file.path(paths$citations, "packages.bib"))
 SpaDES.docs::downloadCSL("ecology-letters", paths$citations)
+
+## references.bib is OUTPUT ONLY -- see the note below
 SpaDES.docs::collapseModuleBibs(
   modulePath = file.path(paths$prj, "modules"),
-  extraBibs = file.path(paths$citations, c("packages.bib", "references.bib")),
+  extraBibs = file.path(paths$citations, c("packages.bib", "references_manual.bib")),
   outFile = file.path(paths$citations, "references.bib")
 )
 
 chapters <- SpaDES.docs::prepManualRmds("./modules", rebuildCache = FALSE)
 
-bookdown::render_book(output_format = "all", envir = new.env())
+SpaDES.docs::renderManual(outputDir = paths$docs, output_format = "all")
 
 ## these must be inside the published directory, not at the repository root
 SpaDES.docs::stagePagesFiles(paths$docs, cname = "example.predictiveecology.org")
 
-unlink("_manual_rmds", recursive = TRUE)
+unlink(unique(dirname(chapters)), recursive = TRUE)
 ```
+
+Use
+[`renderManual()`](https://predictiveecology.github.io/SpaDES.docs/reference/renderManual.md)
+rather than
+[`bookdown::render_book()`](https://pkgs.rstudio.com/bookdown/reference/render_book.html)
+directly. bookdown knits once and then writes each declared format in
+turn, so the website is already on disk when a later format fails, and
+letting that failure propagate discards it along with the deploy that
+would have published it.
+[`renderManual()`](https://predictiveecology.github.io/SpaDES.docs/reference/renderManual.md)
+reports the failure as a GitHub Actions warning and still requires the
+site itself, so a format that cannot be built costs only that format.
+
+Declare the fragile formats **last** in `_output.yml`, for the same
+reason: the formats are written in declaration order and a failure stops
+the rest, so a PDF in the middle costs the EPUB after it too.
+
+Keep the output bibliography out of its own `extraBibs`: listing it
+there merges the file into itself on every build, accumulating
+RefManageR’s `:1`-suffixed duplicates of every entry. Put curated
+entries in a tracked file of their own and treat the assembled one as
+disposable, which it has to be – `citations/` is generated and starts
+empty on CI.
 
 ## Deploying
 
@@ -167,9 +205,10 @@ worth the freshness.
 
 ## Releases, and keeping the old PDFs
 
-A manual that tracks `development` is never “a version” of anything. A
-release is the other build: pinned refs, a version number, and a PDF
-that stays available after the site has moved on.
+A manual that tracks a branch has no version of its own: it describes
+whatever the modules say today. A release is the other build, with
+pinned refs, a version number, and a PDF that stays available after the
+site has moved on.
 
 Keep the released PDFs in version control, under `archive/pdf/`, and
 publish them with the site rather than leaving them on the published
@@ -212,29 +251,82 @@ Have the workflow do it, so a release does not depend on someone
 remembering:
 
 ``` yaml
+      ## after the deploy, never before it -- see below
       - name: Archive the release PDF
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "$(git status --porcelain archive/pdf)" ]; then
+          ## '??' is untracked: a version not in the repository before. A
+          ## modified tracked file is a re-render of a version already archived
+          if [ -z "$(git status --porcelain archive/pdf | grep '^??' || true)" ]; then
             echo "No newly archived PDF; nothing to commit."
+            git checkout -- archive/pdf 2>/dev/null || true
+            exit 0
+          fi
+          git checkout -- archive/pdf 2>/dev/null || true
+          version="$(Rscript -e 'cat(read.dcf("DESCRIPTION", fields = "Version")[1])')"
+          branch="archive/pdf-v${version}"
+          if gh pr list --head "${branch}" --state open --json number --jq 'length' \
+               | grep -qv '^0$'; then
+            echo "A pull request for ${branch} is already open."
             exit 0
           fi
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${branch}"
           git add archive/pdf
-          git commit -m "Archive the manual PDF"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
-            "HEAD:${GITHUB_REF_NAME}"
+          git commit -m "Archive the manual PDF for v${version}"
+          git push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/${branch}"
+          gh pr create --base "${GITHUB_REF_NAME}" --head "${branch}" \
+            --title "Archive the manual PDF for v${version}"
 ```
 
-This is self-gating:
-[`archiveManualPDF()`](https://predictiveecology.github.io/SpaDES.docs/reference/archiveManualPDF.md)
-writes a file only when a PDF was rendered and that version is not
-already archived, so the step is a no-op on ordinary builds and needs no
-separate release trigger.
+Three parts of that need to stay as they are.
+
+**Open a pull request; do not push.** A ruleset on the default branch
+refuses a direct push, with
+`GH006: Changes must be made through a pull request`. Note also that the
+step is gated `if: github.event_name != 'pull_request'`, so no pull
+request build runs it: whatever it does is first exercised by a merge,
+and should be read carefully rather than trusted to a green check.
+
+**Test for an untracked file, not for any change.** A PDF is not
+reproducible byte for byte – xelatex stamps a creation date and a
+document ID into each run – so `git status --porcelain archive/pdf`
+reports a modification after every build, and a check for any change
+opens a pull request every night. Requires SpaDES.docs \>= 0.5.1, which
+leaves an already-archived version alone; this check covers the case
+where something else rewrites the file.
+
+**Put it after the deploy.** A failure here must not stop the site from
+updating, which is what happens when it runs first: nothing handling a
+secondary artifact should be able to withhold the primary one.
+
+### Linking the versions
+
+`bs4_book` has no download menu: `download: ["pdf", "epub"]` is a
+`gitbook` option, accepted and ignored under
+[`bookdown::bs4_book`](https://pkgs.rstudio.com/bookdown/reference/bs4_book.html),
+so setting it publishes the files with nothing pointing at them. Link
+them from the landing page:
+
+``` r
+
+## in index.Rmd, in a `results = "asis"` chunk
+cat(SpaDES.docs::manualArchiveLinks(manualName = "My Manual"), sep = "")
+```
+
+[`manualArchiveLinks()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualArchiveLinks.md)
+lists the archived releases newest first, from the files present,
+excluding the version being built. For the current build’s own PDF and
+EPUB, take the formats from `_output.yml` rather than testing for the
+files: `bs4_book` renders first, so neither file exists yet when
+`index.Rmd` is knitted, and a test for them drops the links from every
+build.
 
 ### Do not use `clean-exclude` for this
 

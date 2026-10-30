@@ -2,6 +2,52 @@
 
 ## SpaDES.docs (development version)
 
+Machinery that each of the three manuals had its own copy of is now
+shared, so a fix reaches all of them. The duplicates had already
+drifted: one manual’s chapter options set a CRAN repository, overriding
+the one CI configures, and one removed dot-prefixed objects that its own
+build script had named with a dot so they would survive knitting.
+
+- [`manualArchiveLinks()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualArchiveLinks.md)
+  returns the “previous versions” list for a manual’s landing page as
+  markdown, built from the files present. It shares its listing with
+  [`publishManualArchive()`](https://predictiveecology.github.io/SpaDES.docs/reference/publishManualArchive.md),
+  which writes the same versions as a page. The links point at the
+  copies the site publishes rather than a repository’s raw files, which
+  stop working if it is renamed or made private.
+
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  reports a line that begins with a text reference without being its own
+  paragraph. bookdown reads any such line as a definition, while
+  de-duplication here requires its own paragraph, because removing a
+  mid-paragraph match would delete the sentence around it. A use that
+  lands first on a line after wrapping therefore produced
+  `Possibly duplicated text reference labels` from a build that had
+  de-duplicated everything it could see, with nothing to say where it
+  came from. The warning names the file, the line and the label; the fix
+  is to re-wrap the module’s prose.
+
+- [`manualChunkOptions()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualChunkOptions.md)
+  sets the options and chunk options every manual chapter is built with,
+  replacing a near-identical `before_chapter_script` in each manual.
+
+- [`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)
+  reads `Version` from a manual’s DESCRIPTION, by field, and puts it
+  where `index.Rmd`’s title page can reach it. Reading positionally is
+  what this replaces: `read.dcf(...)[4]` was `Version` only because it
+  happened to be the fourth field.
+
+- [`renderManual()`](https://predictiveecology.github.io/SpaDES.docs/reference/renderManual.md)
+  renders every declared format and keeps the site when another format
+  fails. bookdown knits once and writes the formats in turn, so the
+  website is already on disk when a later one fails; letting that
+  propagate threw away a rendered book and skipped the deploy, which
+  left the LandR manual’s published site unchanged for 38 days. The
+  failure is reported as a GitHub Actions warning instead, and only a
+  missing site is an error.
+
+## SpaDES.docs 0.5.1
+
 - [`archiveManualPDF()`](https://predictiveecology.github.io/SpaDES.docs/reference/archiveManualPDF.md)
   no longer overwrites a version that is already archived. A release PDF
   records what that version looked like, so the first copy is the one

@@ -49,3 +49,8 @@ which are what
 [`archiveManualPDF()`](https://predictiveecology.github.io/SpaDES.docs/reference/archiveManualPDF.md)
 writes: `<prefix>-v<version>.pdf`. Anything not matching that shape is
 copied but left out of the ordering.
+
+## See also
+
+[`manualArchiveLinks()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualArchiveLinks.md)
+to list the same versions inline, in a chapter.

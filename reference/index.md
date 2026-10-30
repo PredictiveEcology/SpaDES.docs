@@ -22,8 +22,17 @@
 - [`installModulePkgs()`](https://predictiveecology.github.io/SpaDES.docs/reference/installModulePkgs.md)
   : Install the packages a manual's modules need
 
+- [`manualArchiveLinks()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualArchiveLinks.md)
+  : Markdown links to a manual's archived versions
+
+- [`manualChunkOptions()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualChunkOptions.md)
+  : Options every manual chapter is built with
+
 - [`manualPaths()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualPaths.md)
   : Locate a manual's directories
+
+- [`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)
+  : The manual's version, from its DESCRIPTION
 
 - [`panble()`](https://predictiveecology.github.io/SpaDES.docs/reference/panble.md)
   : Pander and kable wrapper function
@@ -33,6 +42,9 @@
 
 - [`publishManualArchive()`](https://predictiveecology.github.io/SpaDES.docs/reference/publishManualArchive.md)
   : Publish a manual's archived releases alongside the site
+
+- [`renderManual()`](https://predictiveecology.github.io/SpaDES.docs/reference/renderManual.md)
+  : Render a manual, without letting one format bring down the rest
 
 - [`stageFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/stageFigure.md)
   : Put a module figure where the rendered document can find it

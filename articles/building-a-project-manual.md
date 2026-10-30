@@ -20,7 +20,7 @@ share a namespace with every other chapter, and its working directory is
 the book’s rather than the module’s.
 [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
 is what reconciles them. This vignette covers what it does, how to wire
-it into a book, and the things that bite.
+it into a book, and the constraints to work within.
 
 ## The shape of a project manual
 
@@ -114,7 +114,7 @@ writeLines(head(readLines(chapters[1]), 8))
     #> ```{r setup-myModule, include = FALSE, eval = TRUE, cache = FALSE}
     #> knitr::opts_chunk$set(cache.rebuild = FALSE)
     #> knitr::opts_knit$set(SpaDES.docs.stageDir = '_manual_rmds/myModule')
-    #> knitr::opts_knit$set(root.dir = '/tmp/RtmpRtt8bF/exampleProject/modules/myModule')
+    #> knitr::opts_knit$set(root.dir = '/tmp/Rtmpu2h6hN/exampleProject/modules/myModule')
     #> knitr::opts_chunk$set(echo = TRUE)
 
 ## What it does to each module `.Rmd`
@@ -132,10 +132,26 @@ In order, because several steps depend on the one before:
 | move References to the end, add `\printbibliography` | chapter-level bibliographies |
 
 Across chapters it also de-duplicates bookdown *text references*, the
-`(ref:key) text` definitions, because two chapters defining the same key
-is an error in the assembled book. Definitions are recognised by being
-their own paragraph. A `(ref:key)` in the middle of a sentence is a use,
-and is left alone.
+`(ref:key) text` definitions, because several chapters defining the same
+key makes bookdown warn `Possibly duplicated text reference labels` and
+leaves it to chance which definition wins. Definitions are recognised by
+being their own paragraph; a `(ref:key)` in the middle of a sentence is
+a use, and is left alone.
+
+bookdown’s own rule is broader: it treats *any* line beginning
+`(ref:key)` as a definition, whether or not it is its own paragraph.
+Prose that wraps so a *use* lands first on a line therefore becomes a
+second definition, which
+[`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+leaves alone because it is not its own block:
+
+    FAIR datasets [*sensu* @StallEtAl2019] on stand biomass and species
+    (ref:percent) cover changes across Canada.
+
+That reads as a use of `(ref:percent)`, but bookdown takes the rest of
+the line as its definition. When a duplicate-label warning persists
+after de-duplication, look for a label at the start of a line in a
+module’s prose and re-wrap it so the label sits mid-line.
 
 ## Wiring it into a build script
 
@@ -143,26 +159,51 @@ The pattern, reduced from LandWeb’s `manual/build.R`:
 
 ``` r
 
-paths <- SpaDES.docs::manualPaths()
+## prjDir explicitly: manualPaths() resolves the project root and expects
+## _bookdown.yml beside it, and in this layout the book is in manual/ while the
+## root is the repository above it
+prjDir <- SpaDES.config::findProjectPath(from_wd = FALSE)
+manDir <- file.path(prjDir, "manual")
+paths <- SpaDES.docs::manualPaths(prjDir = manDir)
 
 SpaDES.docs::writePkgBib(file.path(paths$citations, "packages.bib"))
 SpaDES.docs::collapseModuleBibs(
-  modulePath = file.path(paths$prj, "..", "modules"),
-  extraBibs = file.path(paths$citations, "packages.bib"),
+  modulePath = file.path(prjDir, "modules"),
+  extraBibs = file.path(paths$citations, c("packages.bib", "references_manual.bib")),
   outFile = file.path(paths$citations, "references.bib")
 )
 
-chapters <- SpaDES.docs::prepManualRmds("../modules", rebuildCache = FALSE)
+withr::with_dir(manDir, {
+  SpaDES.docs::manualChunkOptions()          # or call it from _common.R
+  version <- SpaDES.docs::manualVersion("../DESCRIPTION")
 
-bookdown::render_book(output_format = "all", envir = new.env())
+  chapters <- SpaDES.docs::prepManualRmds("../modules", rebuildCache = FALSE)
 
-SpaDES.docs::archiveManualPDF(
-  file.path(paths$docs, "LandWebManual.pdf"),
-  version = "1.0.0", prefix = "LandWeb-manual"
-)
+  SpaDES.docs::renderManual(outputDir = paths$docs, output_format = "all")
 
-unlink("_manual_rmds", recursive = TRUE)   # the generated chapters are disposable
+  SpaDES.docs::archiveManualPDF(
+    file.path(paths$docs, "LandWebManual.pdf"),
+    version = version, prefix = "LandWeb-manual"
+  )
+
+  ## the generated chapters are disposable. Keyed on where they were actually
+  ## staged, rather than a hardcoded "_manual_rmds"
+  unlink(unique(dirname(chapters)), recursive = TRUE)
+})
 ```
+
+`references.bib` is **output only**. Listing it in its own `extraBibs`
+looks like “the manual accumulates its references”, and what it actually
+does is merge the file into itself on every build: one manual’s copy had
+grown to 265 entries, 216 of them RefManageR’s `:1`-style duplicate
+markers. Keep curated entries in a separate tracked file –
+`references_manual.bib` above – and let the output be disposable. It has
+to be, because `citations/` is generated and starts empty on CI.
+
+[`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)
+reads `Version` from DESCRIPTION by field name. Setting the version in
+the build script instead gives two places to edit, and reading it by
+position breaks as soon as a field is added above it.
 
 [`collapseModuleBibs()`](https://predictiveecology.github.io/SpaDES.docs/reference/collapseModuleBibs.md)
 skips `.bib` files with no entries. A module that cites nothing yet
@@ -171,7 +212,7 @@ reasonably ships a comments-only placeholder, and
 fails on a file with no entries – which is enough to take down a whole
 manual.
 
-## Things that bite
+## Constraints
 
 **Add the staging directory to the book’s `.gitignore`.** The generated
 chapters are build output. Before they were staged there they went into
@@ -191,3 +232,32 @@ directory by default; pass `bookdownYML` if it is elsewhere.
 **Cross-reference labels are global.** Two chapters using
 `\@ref(tab:inputs)` collide. The `newModule()` template suffixes labels
 with the module name for this reason; keep that if you edit them.
+
+**A module’s figures do not move with its chapter.** The chapter is read
+from the book root once it is staged, so a path that worked from the
+module’s own directory no longer resolves. Use
+[`includeFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/includeFigure.md)
+in a figure chunk, and
+[`stageFigure()`](https://predictiveecology.github.io/SpaDES.docs/reference/stageFigure.md)
+where a chunk writes the markdown itself, such as a linked badge:
+
+``` r
+
+## in a module chapter
+SpaDES.docs::includeFigure("figures/schematic.png")
+
+cat(paste0("[![version](", SpaDES.docs::stageFigure("figures/badge.png"), ")](", url, ")"))
+```
+
+Do not write an absolute path instead, via `normPath()` or similar: it
+is correct only on the machine that built the book, so the chapter
+renders locally and publishes a dead link. The build stays green while
+every published chapter serves `src="/home/runner/work/..."`.
+
+**`bs4_book` has no download menu.** `download: ["pdf", "epub"]` is a
+`gitbook` option. Setting it under
+[`bookdown::bs4_book`](https://pkgs.rstudio.com/bookdown/reference/bs4_book.html)
+is accepted and ignored, so the files are published with nothing linking
+to them. Link them from the landing page instead, alongside
+[`manualArchiveLinks()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualArchiveLinks.md)
+for the released ones.
