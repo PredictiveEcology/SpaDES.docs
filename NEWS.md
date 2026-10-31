@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.6.2
 
 * `installModulePkgs()` now stops when a module's declared package version is
   not the one installed, naming each requirement and what is on disk.
