@@ -26,6 +26,15 @@
 #'  returns it without installing anything, which is useful for seeing what a
 #'  manual's modules ask for.
 #'
+#' @section Unmet requirements:
+#' After installing, the versions on disk are checked against the versions the
+#' modules asked for, and an unmet requirement is an error. [Require::Install()]
+#' reports one as a warning and returns, which leaves the manual knitting
+#' against whatever is installed: the render then fails inside a module's
+#' `defineModule()`, reporting an object the stale package does not export yet
+#' rather than the stale package. On CI the usual cause is a restored library
+#' cache older than the modules, which a failing build never refreshes.
+#'
 #' @return the packages, invisibly.
 #'
 #' @export
@@ -60,6 +69,76 @@ installModulePkgs <- function(
 
   if (isTRUE(install)) {
     Require::Install(pkgs)
+
+    ## checked against what the modules declared, not the expansion above:
+    ## a transitive constraint that Require reads more strictly than the
+    ## dependency itself does is not the manual's problem to stop for
+    unmet <- unsatisfiedPkgs(modPkgs)
+    if (length(unmet)) {
+      stop(
+        "installModulePkgs(): the modules require package versions that are not installed:\n",
+        paste0("  ", names(unmet), ": ", unmet, "\n", collapse = ""),
+        "Require::Install() reports this as a warning and returns, so the manual ",
+        "would otherwise knit against what is on disk and fail inside a module's ",
+        "metadata, where the message names a missing object rather than a stale ",
+        "package. On CI the usual cause is a restored library cache older than ",
+        "the modules.",
+        call. = FALSE
+      )
+    }
   }
   invisible(pkgs)
+}
+
+## Which of `specs` name a version the installed library does not satisfy,
+## as installed-version-by-requirement. Specs with no version are skipped:
+## there is nothing to check against.
+unsatisfiedPkgs <- function(specs) {
+  wanted <- Require::extractVersionNumber(specs)
+  keep <- !is.na(wanted)
+  if (!any(keep)) {
+    return(character(0))
+  }
+  specs <- specs[keep]
+  wanted <- wanted[keep]
+  name <- Require::extractPkgName(specs)
+  ineq <- Require::extractInequality(specs)
+
+  have <- vapply(
+    name,
+    function(p) {
+      tryCatch(as.character(utils::packageVersion(p)), error = function(e) NA_character_)
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
+
+  satisfied <- vapply(
+    seq_along(specs),
+    function(i) {
+      if (is.na(have[i])) {
+        return(FALSE)
+      }
+      cmp <- utils::compareVersion(have[i], wanted[i])
+      switch(
+        ineq[i],
+        ">=" = cmp >= 0L,
+        ">" = cmp > 0L,
+        "==" = cmp == 0L,
+        "<=" = cmp <= 0L,
+        "<" = cmp < 0L,
+        ## an inequality this does not know is not evidence of a problem
+        TRUE
+      )
+    },
+    logical(1)
+  )
+
+  unmet <- !satisfied
+  if (!any(unmet)) {
+    return(character(0))
+  }
+  out <- ifelse(is.na(have[unmet]), "not installed", have[unmet])
+  names(out) <- paste0(name[unmet], " (", ineq[unmet], " ", wanted[unmet], ")")
+  out
 }

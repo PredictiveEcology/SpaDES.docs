@@ -42,3 +42,14 @@ piped. \code{\link[Require:Install]{Require::Install()}} names its first paramet
 \code{\link[Require:pkgDep2]{Require::pkgDep2()}} also returns a named list, which \code{Install()} wants
 flattened.
 }
+\section{Unmet requirements}{
+
+After installing, the versions on disk are checked against the versions the
+modules asked for, and an unmet requirement is an error. \code{\link[Require:Install]{Require::Install()}}
+reports one as a warning and returns, which leaves the manual knitting
+against whatever is installed: the render then fails inside a module's
+\code{defineModule()}, reporting an object the stale package does not export yet
+rather than the stale package. On CI the usual cause is a restored library
+cache older than the modules, which a failing build never refreshes.
+}
+
