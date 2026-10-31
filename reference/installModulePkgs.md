@@ -55,3 +55,15 @@ piped expression resolves to the literal string `"packages"` and the
 installer is asked for a package by that name.
 [`Require::pkgDep2()`](https://Require.predictiveecology.org/reference/pkgDep.html)
 also returns a named list, which `Install()` wants flattened.
+
+## Unmet requirements
+
+After installing, the versions on disk are checked against the versions
+the modules asked for, and an unmet requirement is an error.
+[`Require::Install()`](https://Require.predictiveecology.org/reference/Require.html)
+reports one as a warning and returns, which leaves the manual knitting
+against whatever is installed: the render then fails inside a module's
+`defineModule()`, reporting an object the stale package does not export
+yet rather than the stale package. On CI the usual cause is a restored
+library cache older than the modules, which a failing build never
+refreshes.

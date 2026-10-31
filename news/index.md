@@ -1,5 +1,18 @@
 # Changelog
 
+## SpaDES.docs 0.6.2
+
+- [`installModulePkgs()`](https://predictiveecology.github.io/SpaDES.docs/reference/installModulePkgs.md)
+  now stops when a module’s declared package version is not the one
+  installed, naming each requirement and what is on disk.
+  [`Require::Install()`](https://Require.predictiveecology.org/reference/Require.html)
+  reports that as a warning and returns, so the manual used to knit
+  against whatever was present and fail later inside a module’s
+  `defineModule()` – reporting an object the stale package does not
+  export yet, rather than the stale package. The visible symptom in the
+  fireSense manual was
+  `no applicable method for '@' applied to an object of class "character"`.
+
 ## SpaDES.docs 0.6.1
 
 - [`manualVersion()`](https://predictiveecology.github.io/SpaDES.docs/reference/manualVersion.md)

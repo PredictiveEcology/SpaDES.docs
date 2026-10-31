@@ -13,7 +13,7 @@ remotes::install_deps(), which is what installs this package."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ remotes::install_deps(), which is what installs this package."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Install the packages a manual's modules need</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/v0.6.1/R/dependencies.R" class="external-link"><code>R/dependencies.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/R/dependencies.R" class="external-link"><code>R/dependencies.R</code></a></small>
       <div class="d-none name"><code>installModulePkgs.Rd</code></div>
     </div>
 
@@ -98,6 +98,18 @@ piped. <code><a href="https://Require.predictiveecology.org/reference/Require.ht
 <code>"packages"</code> and the installer is asked for a package by that name.
 <code><a href="https://Require.predictiveecology.org/reference/pkgDep.html" class="external-link">Require::pkgDep2()</a></code> also returns a named list, which <code>Install()</code> wants
 flattened.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="unmet-requirements">Unmet requirements<a class="anchor" aria-label="anchor" href="#unmet-requirements"></a></h2>
+
+
+<p>After installing, the versions on disk are checked against the versions the
+modules asked for, and an unmet requirement is an error. <code><a href="https://Require.predictiveecology.org/reference/Require.html" class="external-link">Require::Install()</a></code>
+reports one as a warning and returns, which leaves the manual knitting
+against whatever is installed: the render then fails inside a module's
+<code>defineModule()</code>, reporting an object the stale package does not export yet
+rather than the stale package. On CI the usual cause is a restored library
+cache older than the modules, which a failing build never refreshes.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
