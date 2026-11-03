@@ -167,8 +167,8 @@ relabelChunk <- function(header, label) {
 #' one module's suffix cannot separate them from each other.
 #'
 #' `\\@ref(fig:label)` and `\\@ref(tab:label)` move with the labels. \pkg{bookdown}
-#' builds a figure's anchor from its chunk label, and [tableWithCaption()] writes
-#' a table's LaTeX anchor from `opts_current$get("label")`, so a renamed label
+#' builds a figure's anchor from its chunk label, and [addLabel()] writes a
+#' table's anchor from `opts_current$get("label")`, so a renamed label
 #' whose references stayed behind renders as `??` rather than failing --
 #' `Biomass_core` alone has 19 such references.
 #'

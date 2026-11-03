@@ -32,8 +32,8 @@ chose. Labels duplicated \emph{within} one module are then numbered apart, since
 one module's suffix cannot separate them from each other.
 
 \verb{\\\\@ref(fig:label)} and \verb{\\\\@ref(tab:label)} move with the labels. \pkg{bookdown}
-builds a figure's anchor from its chunk label, and \code{\link[=tableWithCaption]{tableWithCaption()}} writes
-a table's LaTeX anchor from \code{opts_current$get("label")}, so a renamed label
+builds a figure's anchor from its chunk label, and \code{\link[=addLabel]{addLabel()}} writes a
+table's anchor from \code{opts_current$get("label")}, so a renamed label
 whose references stayed behind renders as \verb{??} rather than failing --
 \code{Biomass_core} alone has 19 such references.
 
