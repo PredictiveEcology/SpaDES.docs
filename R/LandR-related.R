@@ -123,14 +123,21 @@ chunkLabel <- function(header) {
 
 #' Give a chunk header a different label
 #'
-#' Rebuilds the header rather than substituting inside it: a label may contain
-#' spaces and hyphens, which would have to be escaped to match, and several
-#' modules have labels like `module usage example run -Biomass-core`.
+#' Rebuilds the header and splices it in, rather than substituting inside it.
+#' Two reasons, and the second is the dangerous one: a label may contain spaces
+#' and hyphens that would have to be escaped to match (several modules have
+#' labels like `module usage example run -Biomass-core`); and `sub()` processes
+#' its *replacement* for backreferences, which collapses a `\\` in an option
+#' value to a single `\`. That turned
+#' `fig.cap = "see Table \\\\@ref(tab:x)"` into `"\\@"`, which is not a valid R
+#' escape, so \pkg{knitr} rejected the whole header with "Invalid syntax for
+#' chunk options" and the book failed to render.
 #'
 #' @param header one chunk header line.
 #' @param label the label it should carry.
 #'
-#' @return `header`, labelled `label`, with its other options unchanged.
+#' @return `header`, labelled `label`, with its other options unchanged
+#'   character for character.
 #'
 #' @keywords internal
 #' @rdname chunkLabel
@@ -144,9 +151,19 @@ relabelChunk <- function(header, label) {
     rest <- sub("^,[[:space:]]*", "", rest)
   }
   newInner <- paste0(engine, " ", label, if (nzchar(rest)) paste0(", ", rest))
-  ## to the LAST brace: an option value may itself contain one, as in
-  ## fig.cap = '{a} caption'
-  sub("\\{.*\\}", paste0("{", newInner, "}"), header)
+
+  ## Spliced, not sub()stituted: sub() processes its replacement for
+  ## backreferences, so a `\\` in an option value collapses to a single `\`.
+  ## `fig.cap = "see Table \\@ref(tab:x)"` became `"\@"`, which is not a valid
+  ## R escape, and knitr rejects the whole chunk header -- "Invalid syntax for
+  ## chunk options". To the LAST brace, because an option value may contain one,
+  ## as in fig.cap = '{a} caption'.
+  at <- regexpr("\\{.*\\}", header)
+  paste0(
+    substr(header, 1L, at - 1L),
+    "{", newInner, "}",
+    substring(header, at + attr(at, "match.length"))
+  )
 }
 
 #' Make a chapter's chunk labels unique across the whole book

@@ -18,14 +18,21 @@ relabelChunk(header, label)
 character vector the same length as \code{header}, empty where the chunk
 has no label.
 
-\code{header}, labelled \code{label}, with its other options unchanged.
+\code{header}, labelled \code{label}, with its other options unchanged
+character for character.
 }
 \description{
 \pkg{knitr} reads the first chunk option as the label when it carries no \code{=},
 so \verb{\{r setup, include = FALSE\}} is labelled and \verb{\{r, include = FALSE\}} is not.
 
-Rebuilds the header rather than substituting inside it: a label may contain
-spaces and hyphens, which would have to be escaped to match, and several
-modules have labels like \verb{module usage example run -Biomass-core}.
+Rebuilds the header and splices it in, rather than substituting inside it.
+Two reasons, and the second is the dangerous one: a label may contain spaces
+and hyphens that would have to be escaped to match (several modules have
+labels like \verb{module usage example run -Biomass-core}); and \code{sub()} processes
+its \emph{replacement} for backreferences, which collapses a \verb{\\\\} in an option
+value to a single \verb{\\}. That turned
+\code{fig.cap = "see Table \\\\\\\\@ref(tab:x)"} into \code{"\\\\@"}, which is not a valid R
+escape, so \pkg{knitr} rejected the whole header with "Invalid syntax for
+chunk options" and the book failed to render.
 }
 \keyword{internal}
