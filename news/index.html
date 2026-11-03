@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,11 @@
       <small>Source: <a href="https://github.com/PredictiveEcology/SpaDES.docs/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.4" id="spadesdocs-064">SpaDES.docs 0.6.4<a class="anchor" aria-label="anchor" href="#spadesdocs-064"></a></h2>
+<ul><li>
+<code><a href="../reference/prepManualRmds.html">prepManualRmds()</a></code> no longer corrupts a chunk option that contains a backslash. <strong>0.6.3 rendered no manual at all and should not be used.</strong> It rebuilt each relabelled chunk header with <code><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub()</a></code>, whose replacement is processed for backreferences, so a <code>\\</code> in an option value collapsed to a single <code>\</code>: <code>fig.cap = "see Table \\@ref(tab:x)"</code> became <code>"\@"</code>, which is not a valid R escape. knitr then rejected the whole header – “Invalid syntax for chunk options” – and <code><a href="https://pkgs.rstudio.com/bookdown/reference/render_book.html" class="external-link">bookdown::render_book()</a></code> produced no <code>index.html</code>. Five headers across three LandR chapters were affected, and the LandWeb manual.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.3" id="spadesdocs-063">SpaDES.docs 0.6.3<a class="anchor" aria-label="anchor" href="#spadesdocs-063"></a></h2>
 <ul><li>

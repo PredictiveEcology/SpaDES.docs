@@ -1,5 +1,20 @@
 # Changelog
 
+## SpaDES.docs 0.6.4
+
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  no longer corrupts a chunk option that contains a backslash. **0.6.3
+  rendered no manual at all and should not be used.** It rebuilt each
+  relabelled chunk header with
+  [`sub()`](https://rdrr.io/r/base/grep.html), whose replacement is
+  processed for backreferences, so a `\\` in an option value collapsed
+  to a single `\`: `fig.cap = "see Table \\@ref(tab:x)"` became `"\@"`,
+  which is not a valid R escape. knitr then rejected the whole header –
+  “Invalid syntax for chunk options” – and
+  [`bookdown::render_book()`](https://pkgs.rstudio.com/bookdown/reference/render_book.html)
+  produced no `index.html`. Five headers across three LandR chapters
+  were affected, and the LandWeb manual.
+
 ## SpaDES.docs 0.6.3
 
 - [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
