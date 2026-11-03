@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.6.3
 
 * `prepManualRmds()` now namespaces each chapter's chunk labels by module.
   bookdown merges the chapters into one file before knitting, so labels have to
