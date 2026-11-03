@@ -581,11 +581,12 @@ test_that("prepManualRmds() turns caching off for chunks that stage figures", {
   )
   ## and nothing else is touched
   expect_match(grep("^```\\{r unrelated", chapter, value = TRUE), "cache = TRUE", fixed = TRUE)
-  ## a header that already says so is left exactly as it was, not given a second
-  ## `cache = FALSE`
+  ## a header that already says so keeps the one setting, and is not given a
+  ## second `cache = FALSE`. The label carries the module name because
+  ## namespaceChunkLabels() runs after this rewrite.
   expect_identical(
     grep("^```\\{r already-off", chapter, value = TRUE),
-    "```{r already-off, cache = FALSE}"
+    "```{r already-off-modCache, cache = FALSE}"
   )
 })
 
@@ -723,4 +724,142 @@ test_that("prepManualRmds() moves a References heading to the end of the chapter
 
   expect_length(refs, 1)
   expect_gt(refs, params)
+})
+
+test_that("chunkLabel() tells a label from a leading option", {
+  expect_identical(chunkLabel("```{r setup, include = FALSE}"), "setup")
+  expect_identical(chunkLabel("```{r, include = FALSE}"), "")
+  expect_identical(chunkLabel("```{r}"), "")
+  expect_identical(chunkLabel("```{r module usage example}"), "module usage example")
+})
+
+test_that("relabelChunk() keeps the engine and the other options", {
+  expect_identical(
+    relabelChunk("```{r old, eval = FALSE, echo = TRUE}", "new"),
+    "```{r new, eval = FALSE, echo = TRUE}"
+  )
+  expect_identical(relabelChunk("```{r, eval = FALSE}", "new"), "```{r new, eval = FALSE}")
+  expect_identical(relabelChunk("```{python old}", "new"), "```{python new}")
+  ## an option value may itself contain a brace
+  expect_identical(
+    relabelChunk("```{r old, fig.cap = '{a}'}", "new"),
+    "```{r new, fig.cap = '{a}'}"
+  )
+})
+
+test_that("prepManualRmds() namespaces chunk labels so two modules cannot collide", {
+  localBook(c("modOne", "modTwo"))
+  for (m in c("modOne", "modTwo")) {
+    writeModule(m, "modules", body = c("```{r module usage example, eval = FALSE}", "1 + 1", "```"))
+  }
+
+  labels <- unlist(lapply(prepManualRmds("modules"), function(f) {
+    x <- readLines(f, warn = FALSE)
+    chunkLabel(x[classifyRmdLines(x) == "chunkHeader"])
+  }))
+
+  ## knitr fails the whole book on a repeat, so uniqueness is the property under
+  ## test; the particular names matter less
+  expect_identical(anyDuplicated(labels), 0L)
+  expect_contains(labels, c("module usage example-modOne", "module usage example-modTwo"))
+})
+
+test_that("a label already ending in the module name is left exactly as it was", {
+  localBook("modNS")
+  writeModule("modNS", "modules", body = c(
+    "```{r  spaced-label-modNS ,  eval = FALSE}",
+    "1 + 1",
+    "```"
+  ))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## byte-for-byte, spacing included: these labels carry the module's knitr
+  ## cache entries and its \@ref() targets
+  expect_contains(chapter, "```{r  spaced-label-modNS ,  eval = FALSE}")
+})
+
+test_that("cross-references follow a renamed chunk label", {
+  localBook("modRef")
+  writeModule("modRef", "modules", body = c(
+    "See Figure \\@ref(fig:myfig) and Table \\@ref(tab:mytab).",
+    "",
+    "```{r myfig, fig.cap = 'f'}",
+    "plot(1)",
+    "```",
+    "",
+    "```{r mytab}",
+    "knitr::kable(data.frame(a = 1))",
+    "```"
+  ))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## bookdown builds the anchor from the chunk label, so a reference left behind
+  ## renders as "??" rather than failing the build
+  expect_contains(
+    chapter,
+    "See Figure \\@ref(fig:myfig-modRef) and Table \\@ref(tab:mytab-modRef)."
+  )
+  expect_false(any(grepl("@ref(fig:myfig)", chapter, fixed = TRUE)))
+  expect_false(any(grepl("@ref(tab:mytab)", chapter, fixed = TRUE)))
+})
+
+test_that("two chunks sharing a label within one module are separated", {
+  localBook("modDup")
+  writeModule("modDup", "modules", body = c(
+    "```{r repeated}",
+    "1",
+    "```",
+    "",
+    "```{r repeated}",
+    "2",
+    "```"
+  ))
+
+  chapter <- readLines(prepManualRmds("modules"))
+  labels <- chunkLabel(chapter[classifyRmdLines(chapter) == "chunkHeader"])
+
+  ## one module's suffix cannot separate two of its own chunks
+  expect_identical(anyDuplicated(labels), 0L)
+  expect_contains(labels, c("repeated-modDup", "repeated-modDup-1"))
+})
+
+test_that("an unlabelled chunk is left to knitr", {
+  localBook("modAnon")
+  writeModule("modAnon", "modules", body = c("```{r, echo = FALSE}", "1 + 1", "```"))
+
+  chapter <- readLines(prepManualRmds("modules"))
+
+  ## knitr numbers these across the merged book, so they cannot collide
+  expect_contains(chapter, "```{r, echo = FALSE}")
+})
+
+test_that("namespacing leaves a chapter whose headers knitr can still read", {
+  localBook("modParse")
+  writeModule("modParse", "modules", body = c(
+    "```{r module usage example, eval = FALSE}",
+    "1 + 1",
+    "```"
+  ))
+
+  chapter <- readLines(prepManualRmds("modules"))
+  headers <- chapter[classifyRmdLines(chapter) == "chunkHeader"]
+
+  expect_true(all(grepl(knitr::all_patterns$md$chunk.begin, headers)))
+  expect_true(all(nzchar(chunkLabel(headers))))
+})
+
+test_that("namespaceChunkLabels() returns a chapter with nothing to rename unchanged", {
+  ## prepOneModuleRmd() guarantees a labelled setup chunk, so these guard the
+  ## function's own contract. They are not redundant: without them `old` is
+  ## character(0) and paste0() with a zero-length argument yields length 1,
+  ## which then fails to assign into a zero-length subset.
+  expect_identical(namespaceChunkLabels(character(0), "mod"), character(0))
+  expect_identical(
+    namespaceChunkLabels(c("# Title", "prose"), "mod"),
+    c("# Title", "prose")
+  )
+  unlabelled <- c("```{r}", "1 + 1", "```")
+  expect_identical(namespaceChunkLabels(unlabelled, "mod"), unlabelled)
 })

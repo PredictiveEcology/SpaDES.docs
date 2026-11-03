@@ -100,6 +100,132 @@ chunkLines <- function(lines, at, cls = classifyRmdLines(lines)) {
   seq.int(at, if (length(close)) close[1] else length(lines))
 }
 
+#' The label a chunk header carries
+#'
+#' \pkg{knitr} reads the first chunk option as the label when it carries no `=`,
+#' so `{r setup, include = FALSE}` is labelled and `{r, include = FALSE}` is not.
+#'
+#' @param header character vector of chunk header lines.
+#'
+#' @return character vector the same length as `header`, empty where the chunk
+#'   has no label.
+#'
+#' @keywords internal
+#' @rdname chunkLabel
+chunkLabel <- function(header) {
+  inner <- sub(knitr::all_patterns$md$chunk.begin, "\\1", header)
+  ## the engine, and the comma of the `{r, include = FALSE}` form
+  rest <- sub("^[[:alnum:]_]+[[:space:]]*,?[[:space:]]*", "", inner)
+  first <- trimws(sub(",.*$", "", rest))
+  first[grepl("=", first)] <- ""
+  first
+}
+
+#' Give a chunk header a different label
+#'
+#' Rebuilds the header rather than substituting inside it: a label may contain
+#' spaces and hyphens, which would have to be escaped to match, and several
+#' modules have labels like `module usage example run -Biomass-core`.
+#'
+#' @param header one chunk header line.
+#' @param label the label it should carry.
+#'
+#' @return `header`, labelled `label`, with its other options unchanged.
+#'
+#' @keywords internal
+#' @rdname chunkLabel
+relabelChunk <- function(header, label) {
+  inner <- sub(knitr::all_patterns$md$chunk.begin, "\\1", header)
+  engine <- regmatches(inner, regexpr("^[[:alnum:]_]+", inner))
+  rest <- sub("^[[:alnum:]_]+[[:space:]]*", "", inner)
+  rest <- sub("^,[[:space:]]*", "", rest)
+  if (nzchar(chunkLabel(header))) {
+    rest <- sub("^[^,]*", "", rest) ## the old label
+    rest <- sub("^,[[:space:]]*", "", rest)
+  }
+  newInner <- paste0(engine, " ", label, if (nzchar(rest)) paste0(", ", rest))
+  ## to the LAST brace: an option value may itself contain one, as in
+  ## fig.cap = '{a} caption'
+  sub("\\{.*\\}", paste0("{", newInner, "}"), header)
+}
+
+#' Make a chapter's chunk labels unique across the whole book
+#'
+#' \pkg{bookdown} merges every chapter into one file before knitting, so chunk
+#' labels have to be unique across the book and not merely within a module. The
+#' modules are written and released separately, and several still carry the
+#' labels the \pkg{SpaDES.core} template supplies, so two of them in one book
+#' collide and the render stops at knitr's `Duplicate chunk label`. That is what
+#' `fireSense_burn` and `fireSense_ELFs` did, both holding
+#' `module usage example`.
+#'
+#' Each label gains the module's name, which cannot collide because module names
+#' are directory names. A label already ending in it is left exactly as it is,
+#' down to its spacing: most module labels are namespaced by hand already, and
+#' their knitr cache entries and `\\@ref()` targets are built on the names they
+#' chose. Labels duplicated *within* one module are then numbered apart, since
+#' one module's suffix cannot separate them from each other.
+#'
+#' `\\@ref(fig:label)` and `\\@ref(tab:label)` move with the labels. \pkg{bookdown}
+#' builds a figure's anchor from its chunk label, and [addLabel()] writes a
+#' table's anchor from `opts_current$get("label")`, so a renamed label
+#' whose references stayed behind renders as `??` rather than failing --
+#' `Biomass_core` alone has 19 such references.
+#'
+#' An unlabelled chunk is left to knitr, which numbers those across the merged
+#' book and so cannot produce a collision.
+#'
+#' @param lines character vector of lines.
+#' @param modName module name, used as the namespace.
+#'
+#' @return `lines`, with chunk labels and the references to them rewritten.
+#'
+#' @keywords internal
+#' @rdname namespaceChunkLabels
+namespaceChunkLabels <- function(lines, modName) {
+  cls <- classifyRmdLines(lines)
+  at <- which(cls == "chunkHeader")
+  if (!length(at)) {
+    return(lines)
+  }
+
+  old <- chunkLabel(lines[at])
+  labelled <- nzchar(old)
+  if (!any(labelled)) {
+    return(lines)
+  }
+
+  suffix <- gsub("_", "-", modName)
+  new <- old
+  add <- labelled & !endsWith(old, suffix) & !endsWith(old, modName)
+  new[add] <- paste0(old[add], "-", suffix)
+  new[labelled] <- make.unique(new[labelled], sep = "-")
+
+  ## only the headers that actually change, so a module whose labels are already
+  ## namespaced keeps its file byte-for-byte
+  changed <- which(labelled & new != old)
+  if (!length(changed)) {
+    return(lines)
+  }
+  lines[at[changed]] <- vapply(
+    changed,
+    function(i) relabelChunk(lines[at[i]], new[i]),
+    character(1)
+  )
+
+  for (i in changed) {
+    for (tag in c("fig", "tab")) {
+      lines <- gsub(
+        paste0("\\@ref(", tag, ":", old[i], ")"),
+        paste0("\\@ref(", tag, ":", new[i], ")"),
+        lines,
+        fixed = TRUE
+      )
+    }
+  }
+  lines
+}
+
 #' Text-reference definitions, as distinct from uses
 #'
 #' A \pkg{bookdown} text reference is its own paragraph. The same pattern in the
@@ -172,6 +298,9 @@ textRefMisreads <- function(lines) {
 #'         in the book even if the module set otherwise for standalone knitting;
 #'   \item point `root.dir` at the module directory, injecting it if absent;
 #'   \item set `cache.rebuild` from `rebuildCache`, injecting it if absent;
+#'   \item namespace the chunk labels by module ([namespaceChunkLabels()]), so
+#'         two modules carrying the same template label do not collide once
+#'         \pkg{bookdown} merges the chapters;
 #'   \item move the References heading to the end, adding one if absent, and
 #'         append the LaTeX `\\printbibliography` command.
 #' }
@@ -325,6 +454,11 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
     modName = modName,
     stagingPath = stagingPath
   )
+
+  ## chunk labels have to be unique across the merged book, not just within the
+  ## module. Done after the rewrites above, so each of them still searches for
+  ## the labels the module wrote.
+  lines <- namespaceChunkLabels(lines, modName)
 
   ## the chapter bibliography goes last. A heading line only -- unanchored, this
   ## matched prose, and two matches made a length-2 `if` condition.
