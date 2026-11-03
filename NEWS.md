@@ -1,3 +1,14 @@
+# SpaDES.docs 0.6.4
+
+* `prepManualRmds()` no longer corrupts a chunk option that contains a
+  backslash. **0.6.3 rendered no manual at all and should not be used.** It
+  rebuilt each relabelled chunk header with `sub()`, whose replacement is
+  processed for backreferences, so a `\\` in an option value collapsed to a
+  single `\`: `fig.cap = "see Table \\@ref(tab:x)"` became `"\@"`, which is not
+  a valid R escape. knitr then rejected the whole header -- "Invalid syntax for
+  chunk options" -- and `bookdown::render_book()` produced no `index.html`. Five
+  headers across three LandR chapters were affected, and the LandWeb manual.
+
 # SpaDES.docs 0.6.3
 
 * `prepManualRmds()` now namespaces each chapter's chunk labels by module.
