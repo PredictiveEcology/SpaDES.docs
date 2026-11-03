@@ -849,3 +849,17 @@ test_that("namespacing leaves a chapter whose headers knitr can still read", {
   expect_true(all(grepl(knitr::all_patterns$md$chunk.begin, headers)))
   expect_true(all(nzchar(chunkLabel(headers))))
 })
+
+test_that("namespaceChunkLabels() returns a chapter with nothing to rename unchanged", {
+  ## prepOneModuleRmd() guarantees a labelled setup chunk, so these guard the
+  ## function's own contract. They are not redundant: without them `old` is
+  ## character(0) and paste0() with a zero-length argument yields length 1,
+  ## which then fails to assign into a zero-length subset.
+  expect_identical(namespaceChunkLabels(character(0), "mod"), character(0))
+  expect_identical(
+    namespaceChunkLabels(c("# Title", "prose"), "mod"),
+    c("# Title", "prose")
+  )
+  unlabelled <- c("```{r}", "1 + 1", "```")
+  expect_identical(namespaceChunkLabels(unlabelled, "mod"), unlabelled)
+})
