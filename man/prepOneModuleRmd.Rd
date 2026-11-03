@@ -32,6 +32,9 @@ because several depend on the one before:
 in the book even if the module set otherwise for standalone knitting;
 \item point \code{root.dir} at the module directory, injecting it if absent;
 \item set \code{cache.rebuild} from \code{rebuildCache}, injecting it if absent;
+\item namespace the chunk labels by module (\code{\link[=namespaceChunkLabels]{namespaceChunkLabels()}}), so
+two modules carrying the same template label do not collide once
+\pkg{bookdown} merges the chapters;
 \item move the References heading to the end, adding one if absent, and
 append the LaTeX \verb{\\\\printbibliography} command.
 }
