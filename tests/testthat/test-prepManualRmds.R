@@ -863,3 +863,35 @@ test_that("namespaceChunkLabels() returns a chapter with nothing to rename uncha
   unlabelled <- c("```{r}", "1 + 1", "```")
   expect_identical(namespaceChunkLabels(unlabelled, "mod"), unlabelled)
 })
+
+test_that("relabelChunk() does not collapse an escaped backslash in an option", {
+  ## knitr parses chunk options as R code, so a single `\@` is not a valid
+  ## escape and the whole header is rejected. sub() processes its replacement
+  ## for backreferences and turns `\\` into `\`, which is how this got through.
+  header <- '```{r old, fig.cap = "see Table \\\\@ref(tab:x) and $\\\\frac{a}{b}$"}'
+  expect_identical(
+    relabelChunk(header, "old-mod"),
+    '```{r old-mod, fig.cap = "see Table \\\\@ref(tab:x) and $\\\\frac{a}{b}$"}'
+  )
+})
+
+test_that("a relabelled chapter's chunk options still parse as knitr reads them", {
+  localBook("modCap")
+  writeModule("modCap", "modules", body = c(
+    '```{r figCap, fig.cap = "see Table \\\\@ref(tab:figCap) and $\\\\frac{a}{b}$"}',
+    "plot(1)",
+    "```"
+  ))
+
+  chapter <- readLines(prepManualRmds("modules"))
+  header <- grep("^```\\{r figCap", chapter, value = TRUE)
+  expect_length(header, 1)
+
+  ## the reference moved with the label, and the escape survived
+  expect_match(header, "@ref(tab:figCap-modCap)", fixed = TRUE)
+  expect_match(header, '\\\\@ref', fixed = TRUE)
+
+  ## and what knitr does with the text after the label
+  opts <- sub("\\}$", "", sub("^```\\{r [^,]*,[[:space:]]*", "", header))
+  expect_no_error(parse(text = paste0("alist(", opts, ")")))
+})
