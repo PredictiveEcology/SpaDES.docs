@@ -11,7 +11,7 @@ because several depend on the one before:"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpaDES.docs</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,6 +85,9 @@ directory is never written to; <code>root.dir</code> still points at it.</p></dd
 in the book even if the module set otherwise for standalone knitting;</p></li>
 <li><p>point <code>root.dir</code> at the module directory, injecting it if absent;</p></li>
 <li><p>set <code>cache.rebuild</code> from <code>rebuildCache</code>, injecting it if absent;</p></li>
+<li><p>namespace the chunk labels by module (<code><a href="namespaceChunkLabels.html">namespaceChunkLabels()</a></code>), so
+two modules carrying the same template label do not collide once
+<span class="pkg">bookdown</span> merges the chapters;</p></li>
 <li><p>move the References heading to the end, adding one if absent, and
 append the LaTeX <code>\\printbibliography</code> command.</p></li>
 </ol><p>Steps 5 and 6 both inject after the chunk header, so <code>cache.rebuild</code> ends up

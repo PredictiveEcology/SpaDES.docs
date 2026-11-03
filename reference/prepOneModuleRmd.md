@@ -49,7 +49,12 @@ the path of the `<module>2.Rmd` written.
 
 6.  set `cache.rebuild` from `rebuildCache`, injecting it if absent;
 
-7.  move the References heading to the end, adding one if absent, and
+7.  namespace the chunk labels by module
+    ([`namespaceChunkLabels()`](https://predictiveecology.github.io/SpaDES.docs/reference/namespaceChunkLabels.md)),
+    so two modules carrying the same template label do not collide once
+    bookdown merges the chapters;
+
+8.  move the References heading to the end, adding one if absent, and
     append the LaTeX `\\printbibliography` command.
 
 Steps 5 and 6 both inject after the chunk header, so `cache.rebuild`

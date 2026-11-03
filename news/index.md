@@ -1,5 +1,22 @@
 # Changelog
 
+## SpaDES.docs 0.6.3
+
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  now namespaces each chapter’s chunk labels by module. bookdown merges
+  the chapters into one file before knitting, so labels have to be
+  unique across the whole book; two modules still carrying a label from
+  the `SpaDES.core` template collided and knitr stopped the build with
+  `Duplicate chunk label`. `fireSense_burn` and `fireSense_ELFs` both
+  held `module usage example`. `\@ref(fig:)` and `\@ref(tab:)`
+  references are rewritten along with the labels, since bookdown builds
+  a figure’s anchor from its chunk label and a reference left behind
+  renders as `??`. A label that already ends in the module’s name is
+  left exactly as it was, which covers most of them; labels repeated
+  within one module are numbered apart. The first build after this
+  re-runs the chunks whose labels changed, because a label is part of
+  knitr’s cache key and of the figure filenames.
+
 ## SpaDES.docs 0.6.2
 
 - [`installModulePkgs()`](https://predictiveecology.github.io/SpaDES.docs/reference/installModulePkgs.md)
