@@ -29,6 +29,7 @@
       (ref:key) a caption
       
       ## References
+      
       \printbibliography[segment=\therefsegment,heading=none]
 
 # prepManualRmds() refuses a setup chunk that sets root.dir twice

@@ -895,3 +895,30 @@ test_that("a relabelled chapter's chunk options still parse as knitr reads them"
   opts <- sub("\\}$", "", sub("^```\\{r [^,]*,[[:space:]]*", "", header))
   expect_no_error(parse(text = paste0("alist(", opts, ")")))
 })
+
+test_that("an appended References heading starts a block of its own", {
+  ## a chapter that ends on a list item: pandoc reads a heading on the very next
+  ## line as more of that item, so the chapter showed "... ## References" as text
+  localBook("modList")
+  writeModule("modList", "modules", body = c("### Getting help", "", "- <https://example.org/issues>"))
+
+  staged <- readLines(prepManualRmds("modules"))
+  refs <- grep("^## References", staged)
+  bib <- grep("printbibliography", staged, fixed = TRUE)
+
+  expect_length(refs, 1)
+  expect_identical(staged[refs - 1L], "")
+  expect_length(bib, 1)
+  expect_identical(staged[bib - 1L], "")
+})
+
+test_that("a References heading moved to the end starts a block of its own", {
+  localBook("modMoved")
+  writeModule("modMoved", "modules", body = c("## References", "", "Last line of prose."))
+
+  staged <- readLines(prepManualRmds("modules"))
+  refs <- grep("^## References", staged)
+
+  expect_length(refs, 1)
+  expect_identical(staged[refs - 1L], "")
+})
