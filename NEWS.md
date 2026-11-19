@@ -1,3 +1,14 @@
+# SpaDES.docs (development version)
+
+## Bug fixes
+
+* `prepManualRmds()` puts a blank line before the `## References` heading and
+  the `\printbibliography` line it adds at the end of a chapter. A chapter that
+  ended on a paragraph or a list item -- every module written from the
+  `SpaDES.core` template ends on its "Getting help" link -- showed
+  "... ## References" as text, because pandoc read the heading as more of the
+  item.
+
 # SpaDES.docs 0.6.4
 
 * `prepManualRmds()` no longer corrupts a chunk option that contains a

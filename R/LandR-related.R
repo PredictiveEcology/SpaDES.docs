@@ -478,7 +478,9 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   lines <- namespaceChunkLabels(lines, modName)
 
   ## the chapter bibliography goes last. A heading line only -- unanchored, this
-  ## matched prose, and two matches made a length-2 `if` condition.
+  ## matched prose, and two matches made a length-2 `if` condition. The heading
+  ## and the bibliography command each get a blank line before them: directly
+  ## after a paragraph or a list item, pandoc reads either as more of it.
   cls <- classifyRmdLines(lines)
   bib <- which(
     cls == "prose" &
@@ -487,13 +489,13 @@ prepOneModuleRmd <- function(x, rebuildCache, stagingPath) {
   if (length(bib)) {
     bib <- bib[length(bib)]
     if (!bib %in% c(length(lines), length(lines) - 1L)) {
-      lines <- c(lines[-bib], lines[bib])
+      lines <- c(lines[-bib], "", lines[bib])
     }
   } else {
-    lines <- c(lines, "## References")
+    lines <- c(lines, "", "## References")
   }
   if (!any(grepl("printbibliography", lines, fixed = TRUE))) {
-    lines <- c(lines, "\\printbibliography[segment=\\therefsegment,heading=none]")
+    lines <- c(lines, "", "\\printbibliography[segment=\\therefsegment,heading=none]")
   }
 
   writeLines(lines, con = copyModuleRmd)
