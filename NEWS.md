@@ -1,4 +1,4 @@
-# SpaDES.docs (development version)
+# SpaDES.docs 0.6.5
 
 ## Bug fixes
 
