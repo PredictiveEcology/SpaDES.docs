@@ -1,5 +1,17 @@
 # Changelog
 
+## SpaDES.docs 0.6.5
+
+### Bug fixes
+
+- [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
+  puts a blank line before the `## References` heading and the
+  `\printbibliography` line it adds at the end of a chapter. A chapter
+  that ended on a paragraph or a list item – every module written from
+  the `SpaDES.core` template ends on its “Getting help” link – showed “…
+  \## References” as text, because pandoc read the heading as more of
+  the item.
+
 ## SpaDES.docs 0.6.4
 
 - [`prepManualRmds()`](https://predictiveecology.github.io/SpaDES.docs/reference/prepManualRmds.md)
